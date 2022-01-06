@@ -13,6 +13,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.poulpinou.belotinator.core.Player;
 import com.poulpinou.belotinator.databinding.ActivityMainBinding;
 
 import android.view.Menu;
@@ -27,16 +28,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        //Initialisation
+        Player.loadPlayersList();
 
-        setSupportActionBar(binding.toolbar);
+        this.binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(this.binding.getRoot());
+
+        setSupportActionBar(this.binding.toolbar);
 
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        this.appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
+        NavigationUI.setupActionBarWithNavController(this, navController, this.appBarConfiguration);
 
-        binding.fab.setOnClickListener(new View.OnClickListener() {
+        this.binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
@@ -70,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
+        return NavigationUI.navigateUp(navController, this.appBarConfiguration)
                 || super.onSupportNavigateUp();
     }
 }

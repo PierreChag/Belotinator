@@ -18,6 +18,8 @@ public class Belote {
         this.victoryPoints = victoryPoints;
     }
 
-
+    public boolean playerIsEquipA(Player player){
+        return player == this.playerAEquipA || player == this.playerAEquipB;
+    }
 
 }

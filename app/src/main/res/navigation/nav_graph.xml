@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/MainFragment"
         android:name="com.poulpinou.belotinator.MainFragment"
-        android:label="@string/first_fragment_label"
+        android:label="@string/main_fragment_label"
         tools:layout="@layout/fragment_main">
 
         <action
@@ -17,8 +17,8 @@
     </fragment>
     <fragment
         android:id="@+id/PlayersFragment"
-        android:name="com.poulpinou.belotinator.SecondFragment"
-        android:label="@string/second_fragment_label"
+        android:name="com.poulpinou.belotinator.PlayersFragment"
+        android:label="@string/players"
         tools:layout="@layout/fragment_players">
 
         <action

@@ -11,7 +11,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.poulpinou.belotinator.databinding.FragmentPlayersBinding;
 
-public class SecondFragment extends Fragment {
+public class PlayersFragment extends Fragment {
 
     private FragmentPlayersBinding binding;
 
@@ -21,18 +21,18 @@ public class SecondFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentPlayersBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        this.binding = FragmentPlayersBinding.inflate(inflater, container, false);
+        return this.binding.getRoot();
 
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        binding.buttonSecond.setOnClickListener(new View.OnClickListener() {
+        this.binding.buttonSecond.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                NavHostFragment.findNavController(SecondFragment.this)
+                NavHostFragment.findNavController(PlayersFragment.this)
                         .navigate(R.id.action_PlayersFragment_to_MainFragment);
             }
         });
@@ -41,7 +41,6 @@ public class SecondFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        this.binding = null;
     }
-
 }

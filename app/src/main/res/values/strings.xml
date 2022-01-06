@@ -2,6 +2,7 @@
     <string name="app_name">Belotinator</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
+    <string name="main_fragment_label">Main menu</string>
     <string name="players">Players</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
