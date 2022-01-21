@@ -13,16 +13,57 @@
 
         <action
             android:id="@+id/action_MainFragment_to_PlayersFragment"
-            app:destination="@id/PlayersFragment" />
+            app:destination="@id/PlayersFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out" />
+        <action
+            android:id="@+id/action_MainFragment_to_HistoricFragment"
+            app:destination="@id/HistoricFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out" />
+        <action
+            android:id="@+id/action_MainFragment_to_BeloteFragment"
+            app:destination="@id/BeloteFragment"
+            app:enterAnim="@anim/bottom_up"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/bottom_down" />
     </fragment>
     <fragment
         android:id="@+id/PlayersFragment"
         android:name="com.poulpinou.belotinator.PlayersFragment"
-        android:label="@string/players"
+        android:label="@string/players_fragment_label"
         tools:layout="@layout/fragment_players">
 
         <action
-            android:id="@+id/action_PlayersFragment_to_MainFragment"
-            app:destination="@id/MainFragment" />
+            android:id="@+id/action_PlayersFragment_to_PlayerStatsFragment"
+            app:destination="@id/PlayerStatsFragment"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/slide_out" />
     </fragment>
+    <fragment
+        android:id="@+id/PlayerStatsFragment"
+        android:name="com.poulpinou.belotinator.PlayerStatsFragment"
+        android:label="@string/player_stats_fragment_label"
+        tools:layout="@layout/fragment_player_stats" />
+    <fragment
+        android:id="@+id/HistoricFragment"
+        android:name="com.poulpinou.belotinator.HistoricFragment"
+        android:label="@string/historic_fragment_label"
+        tools:layout="@layout/fragment_historic" >
+        <action
+            android:id="@+id/action_HistoricFragment_to_BeloteFragment"
+            app:destination="@id/BeloteFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/BeloteFragment"
+        android:name="com.poulpinou.belotinator.BeloteFragment"
+        android:label="@string/belote_fragment_label"
+        tools:layout="@layout/fragment_belote" />
 </navigation>

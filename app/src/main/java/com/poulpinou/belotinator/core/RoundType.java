@@ -34,4 +34,14 @@ public enum RoundType {
     public int getBeloteMaxNumber(){
         return this.beloteMaxNumber;
     }
+
+    public static RoundType getRoundType(String name){
+        RoundType[] allRoundTypes = RoundType.values();
+        for (RoundType roundType : allRoundTypes) {
+            if (roundType.getName().equals(name)) {
+                return roundType;
+            }
+        }
+        return CLUB;
+    }
 }

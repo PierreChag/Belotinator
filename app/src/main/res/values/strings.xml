@@ -1,9 +1,27 @@
 <resources>
     <string name="app_name">Belotinator</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="main_fragment_label">Main menu</string>
-    <string name="players">Players</string>
+    <string name="main_fragment_label">Belotinator</string>
+    <string name="players_fragment_label">Players</string>
+    <string name="player_stats_fragment_label">%1$s\'s statistics</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="fab_legend">Button to add new game or player.</string>
+    <string name="action_delete">Delete</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="warning">Warning !</string>
+    <string name="confirm_player_delete">Do you want to delete the player %1$s ?</string>
+    <string name="yes">Yes</string>
+    <string name="create_new_player">What\'s the name of the new player ?</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="historic_button">Historic</string>
+    <string name="background_legend">Background image showing the 2 teams.</string>
+    <string name="historic_fragment_label">Games histories</string>
+    <string name="belote_fragment_label">Belote</string>
+    <string name="empty">\?</string>
+    <string name="equip_a">Equip A</string>
+    <string name="equip_b">Equip B</string>
+    <string name="equip_label">%1$s &amp; %2$s</string>
 </resources>

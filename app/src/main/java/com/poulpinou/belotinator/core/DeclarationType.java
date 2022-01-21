@@ -21,11 +21,25 @@ public enum DeclarationType {
         this.value = value;
     }
 
+    public String getName(){
+        return this.name;
+    }
+
     public int getValue(RoundType type){
         if(type == RoundType.ALL_TRUMP){
             if(this == SQUARE_NINE) return 150;
             if(this == SQUARE_JACK) return 200;
         }
         return this.value;
+    }
+
+    public static DeclarationType getDeclarationType(String name){
+        DeclarationType[] allDeclarationTypes = DeclarationType.values();
+        for (DeclarationType declarationType : allDeclarationTypes) {
+            if (declarationType.getName().equals(name)) {
+                return declarationType;
+            }
+        }
+        return BELOTE;
     }
 }
