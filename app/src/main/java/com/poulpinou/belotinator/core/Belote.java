@@ -1,5 +1,11 @@
 package com.poulpinou.belotinator.core;
 
+import android.content.Context;
+
+import androidx.annotation.NonNull;
+
+import com.poulpinou.belotinator.R;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,24 +28,20 @@ public class Belote {
 
     /**
      * @param dateInMillis When the belote game happened in milliseconds
-     * @param playerAEquipA Player A in equip A
-     * @param playerBEquipA Player B in equip A
-     * @param playerAEquipB Player A in equip B
-     * @param playerBEquipB Player B in equip B
+     * @param playerAEquipA Player A in equip A (id: 1)
+     * @param playerAEquipB Player A in equip B (id: 2)
+     * @param playerBEquipA Player B in equip A (id: 3)
+     * @param playerBEquipB Player B in equip B (id: 4)
      * @param victoryPoints Points required to win the game
      */
-    public Belote(long dateInMillis, Player playerAEquipA, Player playerBEquipA, Player playerAEquipB, Player playerBEquipB, int victoryPoints){
+    public Belote(long dateInMillis, Player playerAEquipA, Player playerAEquipB, Player playerBEquipA, Player playerBEquipB, int victoryPoints){
         this.dateInMillis = dateInMillis;
         this.playerAEquipA = playerAEquipA;
-        this.playerBEquipA = playerBEquipA;
         this.playerAEquipB = playerAEquipB;
+        this.playerBEquipA = playerBEquipA;
         this.playerBEquipB = playerBEquipB;
         this.victoryPoints = victoryPoints;
         this.saveBelote();
-    }
-
-    public boolean playerIsEquipA(Player player){
-        return player == this.playerAEquipA || player == this.playerAEquipB;
     }
 
     /**
@@ -72,5 +74,58 @@ public class Belote {
      */
     public String getDateInString(){
         return new SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(new Date(this.dateInMillis));
+    }
+
+    /**
+     * @param context used to get "no player selected" string.
+     * @return An ArrayList starting with the "no player selected" string, then the list of 4 player names in the following order:
+     * - 0: ?
+     * - 1: playerA EquipA
+     * - 2: playerA EquipB
+     * - 3: playerB EquipA
+     * - 4: playerB EquipB
+     */
+    public ArrayList<String> getStringPlayerList(@NonNull Context context){
+        ArrayList<String> list = new ArrayList<>();
+        list.add(context.getString(R.string.empty));
+        list.add(this.playerAEquipA.getName());
+        list.add(this.playerAEquipB.getName());
+        list.add(this.playerBEquipA.getName());
+        list.add(this.playerBEquipB.getName());
+        return list;
+    }
+
+    /**
+     * @param id of the player:
+     * - 1: playerA EquipA
+     * - 2: playerA EquipB
+     * - 3: playerB EquipA
+     * - 4: playerB EquipB
+     * @return the instance of the corresponding player.
+     */
+    public Player getPlayerFromId(int id){
+        switch (id){
+            default:
+            case 1:
+                return this.playerAEquipA;
+            case 2:
+                return this.playerAEquipB;
+            case 3:
+                return this.playerBEquipA;
+            case 4:
+                return this.playerBEquipB;
+        }
+    }
+
+    /**
+     * @param playerId:
+     * - 1: playerA EquipA
+     * - 2: playerA EquipB
+     * - 3: playerB EquipA
+     * - 4: playerB EquipB
+     * @return true if the player is in EquipA, else otherwise.
+     */
+    public static boolean isEquipA(int playerId){
+        return playerId == 1 || playerId == 3;
     }
 }

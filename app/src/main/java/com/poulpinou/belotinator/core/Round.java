@@ -10,32 +10,36 @@ public class Round {
 
     public static final int POINTS_CAPOT = 90;
 
-    private RoundType type;
-    private int startingPlayerId, leaderPlayerId;
+    private RoundType type = null;
+    private int startingPlayerId = 0, leaderPlayerId = 0;
     private int rawPointsA, rawPointsB, declarationPointsA, declarationPointsB, finalPointsA, finalPointsB;
     private final ArrayList<PlayerDeclaration> declarationList = new ArrayList<>();
 
-    public Round(int startingPlayerId, int leaderPlayerId, RoundType type){
-        this.startingPlayerId = startingPlayerId;
-        this.leaderPlayerId = leaderPlayerId;
-        this.type = type;
-    }
+    public Round(){}
 
-    public void editStartingPlayer(int playerId){
+    public void setStartingPlayer(int playerId){
         this.startingPlayerId = playerId;
     }
 
-    public void editLeaderPlayer(int playerId){
+    public void setLeaderPlayer(int playerId){
         this.leaderPlayerId = playerId;
     }
 
-    public void editRoundType(RoundType type){
+    public void setRoundType(RoundType type){
         this.type = type;
+    }
+
+    public RoundType getType(){
+        return this.type;
+    }
+
+    public boolean canBeSaved(){
+        return this.type != null && this.startingPlayerId != 0 && this.leaderPlayerId != 0;
     }
 
     public void addDeclaration(int playerId, DeclarationType declarationType){
         this.declarationList.add(new PlayerDeclaration(playerId, declarationType));
-        if(PlayerConstruct.isEquipA(playerId)) {
+        if(Belote.isEquipA(playerId)) {
             this.declarationPointsA += declarationType.getValue(this.type);
         }else{
             this.declarationPointsB += declarationType.getValue(this.type);
@@ -60,7 +64,7 @@ public class Round {
         this.finalPointsB = this.rawPointsB + this.declarationPointsB;
         if(this.rawPointsA == 0) this.finalPointsB += POINTS_CAPOT;
         if(this.rawPointsB == 0) this.finalPointsA += POINTS_CAPOT;
-        if(PlayerConstruct.isEquipA(this.leaderPlayerId)) {
+        if(Belote.isEquipA(this.leaderPlayerId)) {
             if(this.finalPointsB > this.finalPointsA) {
                 this.finalPointsA = 0;
                 this.finalPointsB += this.declarationPointsA;
@@ -120,33 +124,7 @@ public class Round {
         }
 
         public boolean isEquipA(){
-            return PlayerConstruct.isEquipA(this.getPlayerId());
-        }
-    }
-
-    public enum PlayerConstruct{
-
-        PLAYER_A_EQUIP_A(0),
-        PLAYER_B_EQUIP_A(1),
-        PLAYER_A_EQUIP_B(2),
-        PLAYER_B_EQUIP_B(3);
-
-        private final int id;
-
-        PlayerConstruct(int id){
-            this.id = id;
-        }
-
-        public int getId(){
-            return this.id;
-        }
-
-        public boolean isEquipA(){
-            return isEquipA(this.getId());
-        }
-
-        public static boolean isEquipA(int playerId){
-            return playerId <= 1;
+            return Belote.isEquipA(this.getPlayerId());
         }
     }
 }

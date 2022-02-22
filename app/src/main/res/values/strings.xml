@@ -2,6 +2,7 @@
     <string name="app_name">Belotinator</string>
     <string name="action_settings">Settings</string>
     <string name="main_fragment_label">Belotinator</string>
+    <string name="player">Player</string>
     <string name="players_fragment_label">Players</string>
     <string name="player_stats_fragment_label">%1$s\'s statistics</string>
     <string name="next">Next</string>
@@ -24,4 +25,16 @@
     <string name="equip_a">Equip A</string>
     <string name="equip_b">Equip B</string>
     <string name="equip_label">%1$s &amp; %2$s</string>
+    <string name="new_round">New round</string>
+    <string name="club_trump">Club trump</string>
+    <string name="diamond_trump">Diamond trump</string>
+    <string name="heart_trump">Heart trump</string>
+    <string name="spade_trump">Spade trump</string>
+    <string name="without_trump">Without trump</string>
+    <string name="all_trumps">All trumps</string>
+    <string name="leader">Leader:</string>
+    <string name="first_player">First player:</string>
+    <string name="declarations">Declarations</string>
+    <string name="add_a_declaration">Add a new declaration</string>
+    <string name="select_first">"Select a player and a declaration \!"</string>
 </resources>

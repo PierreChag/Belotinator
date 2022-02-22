@@ -1,22 +1,26 @@
 package com.poulpinou.belotinator.core;
 
+import com.poulpinou.belotinator.R;
+
 public enum RoundType {
 
-    CLUB("club", 1, 162, 1),
-    DIAMOND("diamond", 1, 162, 1),
-    HEART("heart", 1, 162, 1),
-    SPADE("spade", 1, 162, 1),
-    WITHOUT_TRUMP("without_trump", 4, 130, 0),
-    ALL_TRUMP("all_trump", 3, 258, 4);
+    CLUB("club", 1, 162, R.drawable.club, R.drawable.club_unselected, R.drawable.club_shadow),
+    DIAMOND("diamond", 1, 162,  R.drawable.diamond, R.drawable.diamond_unselected, R.drawable.diamond_shadow),
+    HEART("heart", 1, 162, R.drawable.heart, R.drawable.heart_unselected, R.drawable.heart_shadow),
+    SPADE("spade", 1, 162, R.drawable.spade, R.drawable.spade_unselected, R.drawable.spade_shadow),
+    WITHOUT_TRUMP("without_trump", 4, 130, R.drawable.without_trump, R.drawable.without_trump_unselected, R.drawable.without_trump_shadow),
+    ALL_TRUMP("all_trump", 3, 258, R.drawable.all_trump, R.drawable.all_trump_unselected, R.drawable.all_trump_shadow);
 
     private final String name;
-    private final int scoreMultiplier, pointsPerRound, beloteMaxNumber;
+    private final int scoreMultiplier, pointsPerRound, idRoundTypeImage, idRoundTypeImageUnselected, idRoundTypeImageShadow;
 
-    RoundType(String name, int scoreMultiplier, int pointsPerRound, int beloteMaxNumber){
+    RoundType(String name, int scoreMultiplier, int pointsPerRound, int idRoundTypeImage, int idRoundTypeImageUnselected, int idRoundTypeImageShadow){
         this.name = name;
         this.scoreMultiplier = scoreMultiplier;
         this.pointsPerRound = pointsPerRound;
-        this.beloteMaxNumber = beloteMaxNumber;
+        this.idRoundTypeImage = idRoundTypeImage;
+        this.idRoundTypeImageUnselected = idRoundTypeImageUnselected;
+        this.idRoundTypeImageShadow = idRoundTypeImageShadow;
     }
 
     public String getName(){
@@ -31,8 +35,16 @@ public enum RoundType {
         return this.scoreMultiplier;
     }
 
-    public int getBeloteMaxNumber(){
-        return this.beloteMaxNumber;
+    public int getIdRoundTypeImage(){
+        return this.idRoundTypeImage;
+    }
+
+    public int getIdRoundTypeImageUnselected(){
+        return this.idRoundTypeImageUnselected;
+    }
+
+    public int getIdRoundTypeImageShadow(){
+        return this.idRoundTypeImageShadow;
     }
 
     public static RoundType getRoundType(String name){
