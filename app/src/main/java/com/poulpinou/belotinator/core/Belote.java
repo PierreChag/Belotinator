@@ -66,6 +66,7 @@ public class Belote {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        //TODO Doesn't work because there is a ":" in the DateInString formatting...
         FileHandler.saveJSONStringToFile(this.getDateInString() + ".json", thisBeloteJson.toString());
     }
 

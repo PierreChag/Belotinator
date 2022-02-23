@@ -124,7 +124,7 @@
                 android:layout_marginTop="10dp"
                 android:background="@color/light_grey"
                 android:orientation="vertical"
-                android:visibility="gone">
+                android:visibility="visible">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -258,6 +258,22 @@
                     android:textColor="@color/black"
                     android:textSize="24sp" />
 
+                <LinearLayout
+                    android:id="@+id/layout_declarations_a"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="10dp">
+
+                    <LinearLayout
+                        android:id="@+id/layout_declarations_b"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="end">
+
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

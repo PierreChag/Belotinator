@@ -4,9 +4,13 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +19,11 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -84,6 +89,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 this.setupRoundTypeButton(activity.findViewById(this.getButtonRoundTypeId(roundType)), roundType);
             }
             this.setupDeclarationsButton(activity.findViewById(R.id.declaration_button));
+            this.setupRemoveDeclarations(activity.findViewById(R.id.layout_declarations_a));
         }
     }
 
@@ -150,6 +156,16 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     }else{
                         dialog.dismiss();
                         newRound.addDeclaration(spinnerPlayer.getSelectedItemPosition(), newDeclaration);
+                        LinearLayout layoutB = getActivity().findViewById(R.id.layout_declarations_b);
+                        ImageView iv = getDeclarationImageView(activity, newDeclaration);
+                        if(Belote.isEquipA(spinnerPlayer.getSelectedItemPosition())){
+                            LinearLayout layoutA = getActivity().findViewById(R.id.layout_declarations_a);
+                            iv.setBackgroundColor(activity.getResources().getColor(R.color.equip_A));
+                            layoutA.addView(iv, layoutA.indexOfChild(layoutB));
+                        }else{
+                            iv.setBackgroundColor(activity.getResources().getColor(R.color.equip_B));
+                            layoutB.addView(iv);
+                        }
                         newDeclaration = null;
                     }
                 });
@@ -158,6 +174,35 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 dialog.show();
             }
         });
+    }
+
+    private void setupRemoveDeclarations(LinearLayout linearLayout) {
+        linearLayout.setOnClickListener(v -> {
+            Activity activity = this.getActivity();
+            if(activity != null){
+                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                builder.setTitle(R.string.remove_declarations);
+                builder.setPositiveButton(R.string.confirm, (dialog, which) -> {
+                    LinearLayout layoutB = activity.findViewById(R.id.layout_declarations_b);
+                    layoutB.removeAllViews();
+                    linearLayout.removeViewsInLayout(0, linearLayout.getChildCount() - 1);
+                    dialog.dismiss();
+                });
+                builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+                AlertDialog alert = builder.create();
+                alert.show();
+            }
+        });
+    }
+
+    private static ImageView getDeclarationImageView(Context context, DeclarationType declarationType) {
+        ImageView iv = new ImageView(context);
+        iv.setImageResource(declarationType.getIdIcon());
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+        int px = Math.round(30 * (metrics.densityDpi / 160f));
+        iv.setLayoutParams(new LinearLayout.LayoutParams(px, px));
+        return iv;
     }
 
     private int getButtonRoundTypeId(RoundType roundType){

@@ -37,4 +37,5 @@
     <string name="declarations">Declarations</string>
     <string name="add_a_declaration">Add a new declaration</string>
     <string name="select_first">"Select a player and a declaration \!"</string>
+    <string name="remove_declarations">Remove all declarations ?</string>
 </resources>
