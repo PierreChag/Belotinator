@@ -7,10 +7,10 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.text.InputType;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +42,7 @@ import java.util.Calendar;
 
 public class BeloteFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
+    //TODO setLeader et setFirst à chaque modification (et recalculer les scores) et verrouiller les 2 edit text.
     private static int SCREEN_HEIGHT = 0;
     private int emptyPlayerCount;
     private Belote beloteGame;
@@ -59,7 +60,6 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         }
         SCREEN_HEIGHT = 1000;
     }
-
 
     public BeloteFragment() {
         // Required empty public constructor
@@ -90,6 +90,10 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             }
             this.setupDeclarationsButton(activity.findViewById(R.id.declaration_button));
             this.setupRemoveDeclarations(activity.findViewById(R.id.layout_declarations_a));
+            EditText rawPointsA = activity.findViewById(R.id.raw_points_A), rawPointsB = activity.findViewById(R.id.raw_points_B);
+            TextView finalPointsA = activity.findViewById(R.id.final_points_A), finalPointsB = activity.findViewById(R.id.final_points_B);
+            this.setupRawPointsEditText(rawPointsA, rawPointsB, true, finalPointsA, finalPointsB);
+            this.setupRawPointsEditText(rawPointsB, rawPointsA, false, finalPointsA, finalPointsB);
         }
     }
 
@@ -191,6 +195,46 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
                 AlertDialog alert = builder.create();
                 alert.show();
+            }
+        });
+    }
+
+    private void setupRawPointsEditText(EditText editText, EditText otherEquipEditText, boolean equipA, TextView viewEquipA, TextView viewEquipB) {
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                int points;
+                try{
+                    points = Integer.parseInt(s.toString());
+                }catch(NumberFormatException e) {
+                    s.clear();
+                    return;
+                }
+                if(newRound == null) return;
+                if(points > newRound.getType().getPointsPerRound()) {
+                    points = newRound.getType().getPointsPerRound();
+                    s.clear();
+                    s.append(String.valueOf(points));
+                }
+                if(newRound.getRawPoints(equipA) != points && getActivity() != null){
+                    newRound.setPointsEquip(equipA, points);
+                    otherEquipEditText.setText(String.valueOf(newRound.getRawPoints(!equipA)));
+                    viewEquipA.setText(String.valueOf(newRound.getFinalPoints(true)));
+                    viewEquipB.setText(String.valueOf(newRound.getFinalPoints(false)));
+                    if(newRound.winnerIsEquipA()){
+                        viewEquipA.setBackgroundColor(getActivity().getResources().getColor(R.color.equip_A));
+                        viewEquipB.setBackgroundColor(0x00000000);
+                    }else{
+                        viewEquipA.setBackgroundColor(0x00000000);
+                        viewEquipB.setBackgroundColor(getActivity().getResources().getColor(R.color.equip_B));
+                    }
+                }
             }
         });
     }
