@@ -1,5 +1,7 @@
 package com.poulpinou.belotinator.core;
 
+import android.view.View;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,6 +70,13 @@ public class Round {
     }
 
     /**
+     * @return the list of declarations.
+     */
+    public ArrayList<PlayerDeclaration> getDeclarationList() {
+        return this.declarationList;
+    }
+
+    /**
      * @return True if the basic parameters are initialized (RoundType, StartingPlayer and LeaderPlayer).
      */
     public boolean canAddPoints(){
@@ -85,14 +94,17 @@ public class Round {
      * Adds the declaration to the declaration list, and computes the points.
      * @param playerId in {1, 2, 3, 4}.
      * @param declarationType of the declaration.
+     * @return the viewId generated for the corresponding declaration.
      */
-    public void addDeclaration(int playerId, DeclarationType declarationType){
-        this.declarationList.add(new PlayerDeclaration(playerId, declarationType));
+    public int addDeclaration(int playerId, DeclarationType declarationType){
+        int id = View.generateViewId();
+        this.declarationList.add(new PlayerDeclaration(playerId, declarationType, id));
         if(Belote.isEquipA(playerId)) {
             this.declarationPointsA += declarationType.getValue(this.type);
         }else{
             this.declarationPointsB += declarationType.getValue(this.type);
         }
+        return id;
     }
 
     /**
@@ -110,6 +122,14 @@ public class Round {
     }
 
     /**
+     * @param index of the declaration in the list
+     * @return the corresponding view id.
+     */
+    public int getDeclarationViewId(int index){
+        return this.declarationList.get(index).getViewId();
+    }
+
+    /**
      * Computes the points (rawPoints without declaration, declarationPoints and finalPoints with multiplier).
      * @param equipA True if points in parameters are equipA's points.
      * @param points Points won during this round.
@@ -118,7 +138,10 @@ public class Round {
         if(this.type == null) return;
         this.rawPointsA = equipA ? points : this.type.getPointsPerRound() - points;
         this.rawPointsB = equipA ? this.type.getPointsPerRound() - points : points;
+        this.computesFinalPoints();
+    }
 
+    public void computesFinalPoints(){
         this.finalPointsA = this.rawPointsA + this.declarationPointsA;
         this.finalPointsB = this.rawPointsB + this.declarationPointsB;
         if(Belote.isEquipA(this.leaderPlayerId)) {
@@ -180,19 +203,28 @@ public class Round {
         return thisRoundJson;
     }
 
+    public void clearPoints() {
+        this.rawPointsA = 0;
+        this.rawPointsB = 0;
+        this.finalPointsA = 0;
+        this.finalPointsB = 0;
+    }
+
     public static class PlayerDeclaration{
 
         private final int playerId;
         private final DeclarationType declarationType;
+        private final int viewId;
 
         /**
          * Object used to store each declarations during a round with its player.
          * @param playerId in {1, 2, 3, 4}.
          * @param declarationType of the declaration.
          */
-        public PlayerDeclaration(int playerId, DeclarationType declarationType){
+        public PlayerDeclaration(int playerId, DeclarationType declarationType, int viewId){
             this.playerId = playerId;
             this.declarationType = declarationType;
+            this.viewId = viewId;
         }
 
         /**
@@ -203,10 +235,25 @@ public class Round {
         }
 
         /**
-         * @return the playerId in {1, 2, 3, 4}
+         * @return the playerId in {1, 2, 3, 4}.
          */
         public int getPlayerId(){
             return this.playerId;
+        }
+
+        /**
+         * @param belote game to get the player names.
+         * @return the name of the declaration owner in the given Belote game.
+         */
+        public String getPlayerName(Belote belote){
+            return belote.getPlayerFromId(this.playerId).getName();
+        }
+
+        /**
+         * @return the view id of the declaration.
+         */
+        public int getViewId() {
+            return this.viewId;
         }
 
         /**
