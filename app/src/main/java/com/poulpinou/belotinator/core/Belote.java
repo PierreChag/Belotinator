@@ -45,6 +45,35 @@ public class Belote {
     }
 
     /**
+     * Adds the round in input in the Belote round list, computes the total points, and save to json.
+     * @param newRound to be added.
+     */
+    public void addRound(Round newRound){
+        this.roundsList.add(newRound);
+        if(newRound.isInDispute()){
+
+        }else{
+            this.equipAPoints += newRound.getFinalPoints(true);
+            this.equipBPoints += newRound.getFinalPoints(false);
+        }
+        this.saveBelote();
+    }
+
+    /**
+     * @return the current total points of Equip A
+     */
+    public int getEquipAPoints(){
+        return this.equipAPoints;
+    }
+
+    /**
+     * @return the current total points of Equip B
+     */
+    public int getEquipBPoints(){
+        return this.equipBPoints;
+    }
+
+    /**
      * Check first if a json file containing the list of player exists.
      * Create one if needed with the new player saved.
      * Replace the existing one with the new list of players.

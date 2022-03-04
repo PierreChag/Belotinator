@@ -73,7 +73,8 @@
         android:layout_height="wrap_content"
         android:background="@color/dark_grey"
         android:orientation="horizontal"
-        android:padding="10dp"
+        android:paddingHorizontal="10dp"
+        android:paddingTop="10dp"
         android:visibility="gone">
 
         <TextView
@@ -103,6 +104,39 @@
             android:textSize="20sp" />
 
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/belote_equip_score_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/equipA_points"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAlignment="center"
+            android:textColor="@color/equip_A"
+            android:textSize="40sp" />
+
+        <TextView
+            android:id="@+id/equipB_points"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAlignment="center"
+            android:textColor="@color/equip_B"
+            android:textSize="40sp" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:background="@android:color/black"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -328,8 +362,8 @@
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
                         android:textAlignment="center"
-                        android:textSize="40sp"
-                        android:textColor="@color/black"/>
+                        android:textColor="@color/black"
+                        android:textSize="40sp" />
 
                     <TextView
                         android:id="@+id/final_points_B"
@@ -338,12 +372,12 @@
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
                         android:textAlignment="center"
-                        android:textSize="40sp"
-                        android:textColor="@color/black"/>
+                        android:textColor="@color/black"
+                        android:textSize="40sp" />
                 </LinearLayout>
 
                 <Button
-                    android:id="@+id/button"
+                    android:id="@+id/button_save_round"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/confirm"

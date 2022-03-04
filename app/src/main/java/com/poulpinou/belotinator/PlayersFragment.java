@@ -3,6 +3,7 @@ package com.poulpinou.belotinator;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -64,6 +65,7 @@ public class PlayersFragment extends Fragment {
         LinearLayout layout = this.getActivity().findViewById(R.id.players_layout);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
+        //TODO Fixer les ids qui risquent de faire des conflits.
         int id = 0;
         for(Player player : Player.PLAYERS_LIST){
             layout.addView(this.createPlayerButton(player, id, params));
@@ -76,6 +78,7 @@ public class PlayersFragment extends Fragment {
         playerButton.setLayoutParams(params);
         playerButton.setText(player.getName());
         playerButton.setId(id);
+        playerButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
         playerButton.setOnClickListener(view -> {
             PlayerStatsFragment.selectedPlayer = player;
             NavHostFragment.findNavController(PlayersFragment.this).navigate(R.id.action_PlayersFragment_to_PlayerStatsFragment);

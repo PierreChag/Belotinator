@@ -39,4 +39,5 @@
     <string name="select_first">"Select a player and a declaration \!"</string>
     <string name="remove_declaration">Select the declaration to delete</string>
     <string name="declaration_legend">Declaration icon</string>
+    <string name="missing_value_round">Please fill up all the informations first !</string>
 </resources>

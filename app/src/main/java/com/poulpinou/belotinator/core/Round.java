@@ -39,6 +39,19 @@ public class Round {
     }
 
     /**
+     * @param belote used to retrieve the player list.
+     * @return the name of the Leader of this round.
+     */
+    public String getLeaderPlayerName(Belote belote){
+        return belote.getPlayerFromId(this.leaderPlayerId).getName();
+    }
+
+
+    public boolean leaderIsEquipA() {
+        return Belote.isEquipA(this.leaderPlayerId);
+    }
+
+    /**
      * Initialize the basic parameter type.
      * @param type is the RoundType used to computes the points.
      */
@@ -67,6 +80,10 @@ public class Round {
      */
     public int getFinalPoints(boolean equipA) {
         return equipA ? this.finalPointsA : this.finalPointsB;
+    }
+
+    public boolean isInDispute(){
+        return this.finalPointsA == this.finalPointsB;
     }
 
     /**
@@ -141,10 +158,21 @@ public class Round {
         this.computesFinalPoints();
     }
 
+    /**
+     * Computes the final Points using raw Points and declaration Points:
+     * - final Points take the value 0 if both raw Points are 0.
+     * - firstly, computes the sum of the raw Points and the declaration Points.
+     * - then applies the multiplies of the roundType.
+     */
     public void computesFinalPoints(){
+        if(this.rawPointsA == 0 && this.rawPointsB == 0){
+            this.finalPointsA = 0;
+            this.finalPointsB = 0;
+            return;
+        }
         this.finalPointsA = this.rawPointsA + this.declarationPointsA;
         this.finalPointsB = this.rawPointsB + this.declarationPointsB;
-        if(Belote.isEquipA(this.leaderPlayerId)) {
+        if(this.leaderIsEquipA()) {
             if(this.finalPointsB > this.finalPointsA) {
                 this.finalPointsA = 0;
                 this.finalPointsB = this.type.getPointsPerRound() + this.declarationPointsA + this.declarationPointsB;
@@ -163,21 +191,28 @@ public class Round {
         this.finalPointsB *= this.type.getMultiplier();
     }
 
-    public boolean winnerIsEquipA(){
-        return this.finalPointsA > this.finalPointsB;
+    /**
+     * @return an integer corresponding to the winner.
+     * <p>- Equip A: -1
+     * <p>- Equality: 0
+     * <p>- Equip B: 1
+     */
+    public int getWinner(){
+        if(this.finalPointsA == this.finalPointsB) return 0;
+        return this.finalPointsA > this.finalPointsB ? -1 : 1;
     }
 
     /**
      * Create a JSONObject used to save this Round in json.
      * @return a JSONObject containing the parameters:
-     * - type
-     * - startingPlayerId
-     * - leaderPlayerId
-     * - rawPointsA
-     * - rawPointsB
-     * - finalPointsA
-     * - finalPointsB
-     * - a JSONArray declarationsList containing all declarations
+     * <p>- type
+     * <p>- startingPlayerId
+     * <p>- leaderPlayerId
+     * <p>- rawPointsA
+     * <p>- rawPointsB
+     * <p>- finalPointsA
+     * <p>- finalPointsB
+     * <p>- a JSONArray declarationsList containing all declarations
      */
     public JSONObject getJson(){
         JSONObject thisRoundJson = new JSONObject();
@@ -203,6 +238,9 @@ public class Round {
         return thisRoundJson;
     }
 
+    /**
+     * Set raw Points and final Points to 0.
+     */
     public void clearPoints() {
         this.rawPointsA = 0;
         this.rawPointsB = 0;

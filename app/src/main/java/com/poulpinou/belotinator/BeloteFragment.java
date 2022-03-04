@@ -3,23 +3,27 @@ package com.poulpinou.belotinator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageButton;
@@ -43,7 +47,6 @@ import java.util.Calendar;
 
 public class BeloteFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
-    //TODO setLeader et setFirst à chaque modification (et recalculer les scores) et verrouiller les 2 edit text.
     private static int SCREEN_HEIGHT = 0;
     private int emptyPlayerCount;
     private Belote beloteGame;
@@ -51,7 +54,8 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private DeclarationType newDeclaration = null;
 
     private EditText editTextRawPointsA, editTextRawPointsB;
-    private TextView textViewFinalPointsA, textViewFinalPointsB;
+    private TextView textViewFinalPointsA, textViewFinalPointsB, textViewTotalPointsA, textViewTotalPointsB;
+    private LinearLayout layoutBelote, layoutNewRound;
 
     private void setScreenHeight() {
         if(this.getContext() != null){
@@ -62,6 +66,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         }
         SCREEN_HEIGHT = 1000;
     }
+    //TODO Ajouter la phrase "L'équipe A/B doit marquer X points."
 
     public BeloteFragment() {
         // Required empty public constructor
@@ -96,8 +101,13 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             this.editTextRawPointsB = activity.findViewById(R.id.raw_points_B);
             this.textViewFinalPointsA = activity.findViewById(R.id.final_points_A);
             this.textViewFinalPointsB = activity.findViewById(R.id.final_points_B);
-            this.setupRawPointsEditText(this.editTextRawPointsA, this.editTextRawPointsB, true, this.textViewFinalPointsA, this.textViewFinalPointsB);
-            this.setupRawPointsEditText(this.editTextRawPointsB, this.editTextRawPointsA, false, this.textViewFinalPointsA, this.textViewFinalPointsB);
+            this.setupRawPointsEditText(this.editTextRawPointsA, this.editTextRawPointsB, true);
+            this.setupRawPointsEditText(this.editTextRawPointsB, this.editTextRawPointsA, false);
+            this.setupSaveRoundButton(activity, activity.findViewById(R.id.button_save_round));
+            this.textViewTotalPointsA = activity.findViewById(R.id.equipA_points);
+            this.textViewTotalPointsB = activity.findViewById(R.id.equipB_points);
+            this.layoutBelote = activity.findViewById(R.id.belote_layout);
+            this.layoutNewRound = activity.findViewById(R.id.belote_new_round);
         }
     }
 
@@ -134,7 +144,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         });
     }
 
-    private void setupDeclarationsButton(TextView button){
+    private void setupDeclarationsButton(Button button){
         button.setOnClickListener(v -> {
             FragmentActivity activity = getActivity();
             if (activity != null){
@@ -198,22 +208,52 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                         newRound.getDeclarationList().stream().mapToInt(declaration -> declaration.getDeclarationType().getIdIcon()).toArray());
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder.setTitle(R.string.remove_declaration);
-                builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int item ) {
-                                View declarationView = activity.findViewById(newRound.getDeclarationViewId(item));
-                                ((ViewGroup) declarationView.getParent()).removeView(declarationView);
-                                newRound.removeDeclaration(item);
-                                updateFinalPoints(activity);
-                                dialog.dismiss();
-                            }
-                        });
+                builder.setAdapter(adapter, (dialog, item) -> {
+                    View declarationView = activity.findViewById(newRound.getDeclarationViewId(item));
+                    ((ViewGroup) declarationView.getParent()).removeView(declarationView);
+                    newRound.removeDeclaration(item);
+                    updateFinalPoints(activity);
+                    dialog.dismiss();
+                });
                 builder.setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
                 builder.show();
             }
         });
     }
 
-    private void setupRawPointsEditText(EditText editText, EditText otherEquipEditText, boolean equipA, TextView viewEquipA, TextView viewEquipB) {
+
+
+    private void setupSaveRoundButton(@NonNull Activity activity, Button button) {
+        button.setOnClickListener(v -> {
+            if(this.newRound.canBeSaved()){
+                this.beloteGame.addRound(this.newRound);
+                this.fadeAndReset(activity);
+                this.setScores();
+            }else{
+                Toast.makeText(activity, R.string.missing_value_round, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    /**
+     * Clears all the currently selected value in the new round layout based on the current values in newRound.
+     * Thus, newRound must not be reset before calling this method.
+     * @param activity the context.
+     */
+    private void clearNewRoundLayout(@NonNull Activity activity) {
+        Spinner spinnerLeader = activity.findViewById(R.id.spinner_new_leader);
+        spinnerLeader.setSelection(0);
+        ImageButton buttonType = activity.findViewById(this.getButtonRoundTypeId(this.newRound.getType()));
+        buttonType.setImageResource(newRound.getType().getIdRoundTypeImageUnselected());
+        Spinner spinnerFirst = activity.findViewById(R.id.spinner_new_first);
+        spinnerFirst.setSelection(0);
+        for(int index = 0; index < this.newRound.getDeclarationList().size(); index++){
+            View declarationView = activity.findViewById(this.newRound.getDeclarationViewId(index));
+            ((ViewGroup) declarationView.getParent()).removeView(declarationView);
+        }
+    }
+
+    private void setupRawPointsEditText(EditText editText, EditText otherEquipEditText, boolean equipA) {
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -257,8 +297,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         ImageView iv = new ImageView(context);
         iv.setImageResource(declarationType.getIdIcon());
         iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
-        int px = Math.round(30 * (metrics.densityDpi / 160f));
+        int px = getPixelFromDp(30);
         iv.setLayoutParams(new LinearLayout.LayoutParams(px, px));
         return iv;
     }
@@ -323,6 +362,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                                 Player.getPlayerFromListIndex(spinnerBB.getSelectedItemPosition()),
                                 Belote.DEFAULT_VICTORY_POINTS);
                     }
+                    this.setScores();
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(this.getActivity()));
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     Spinner spinnerFirst = this.getActivity().findViewById(R.id.spinner_new_first);
@@ -332,10 +372,19 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     slide(
                             this.getActivity().findViewById(R.id.belote_equip_maker_layout),
                             this.getActivity().findViewById(R.id.belote_equip_summary_layout),
+                            this.getActivity().findViewById(R.id.belote_equip_score_layout),
                             this.getActivity().findViewById(R.id.belote_new_round));
                 }
             }
         }
+    }
+
+    /**
+     * Sets the current total points in beloteGame in the 2 TextViews.
+     */
+    private void setScores(){
+        this.textViewTotalPointsA.setText(String.valueOf(beloteGame.getEquipAPoints()));
+        this.textViewTotalPointsB.setText(String.valueOf(beloteGame.getEquipBPoints()));
     }
 
     private void tryResetSelectedPlayer(@NonNull FragmentActivity activity, int selectedSpinnerID, int comparedSpinnerID, int pos){
@@ -353,6 +402,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         }
     }
 
+    /**
+     * Checks if the current newRound has all the required parameters. If yes, all the user to enter the raw points.
+     * Else, locks the editText to enter these values, and clear the current raw points in newRound.
+     * Finally, it updates the final points to match the raw points.
+     * @param context is the current context.
+     */
     public void updatePoints(@NonNull Context context){
         if(this.newRound.canAddPoints()){
             switchEditText(this.editTextRawPointsA, true);
@@ -366,19 +421,28 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     }
 
     /**
-     * Computes the finalPoints with the current parameters and updates the 2 TextView showing the final Points.
+     * Computes the finalPoints with the current parameters and stores them in newRound.
+     * Then updates the 2 TextViews showing the final Points.
+     * @param context is the current context.
      */
     public void updateFinalPoints(@NonNull Context context){
         if(this.newRound.canAddPoints()){
             this.newRound.computesFinalPoints();
             this.textViewFinalPointsA.setText(String.valueOf(newRound.getFinalPoints(true)));
             this.textViewFinalPointsB.setText(String.valueOf(newRound.getFinalPoints(false)));
-            if(newRound.winnerIsEquipA()){
-                this.textViewFinalPointsA.setBackgroundColor(context.getResources().getColor(R.color.equip_A, null));
-                this.textViewFinalPointsB.setBackgroundColor(0x00000000);
-            }else{
-                this.textViewFinalPointsA.setBackgroundColor(0x00000000);
-                this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.equip_B, null));
+            switch(newRound.getWinner()){
+                case -1:
+                    this.textViewFinalPointsA.setBackgroundColor(context.getResources().getColor(R.color.equip_A, null));
+                    this.textViewFinalPointsB.setBackgroundColor(0x00000000);
+                    break;
+                default:
+                case 0:
+                    this.textViewFinalPointsA.setBackgroundColor(0x00000000);
+                    this.textViewFinalPointsB.setBackgroundColor(0x00000000);
+                    break;
+                case 1:
+                    this.textViewFinalPointsA.setBackgroundColor(0x00000000);
+                    this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.equip_B, null));
             }
         }else{
             this.textViewFinalPointsA.setText("0");
@@ -442,5 +506,111 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             public void onAnimationRepeat(Animation animation) {}
         });
         viewOut.startAnimation(animOut);
+    }
+
+    public void fadeAndReset(@NonNull Activity activity){
+        Animation fadeOut = new AlphaAnimation(1, 0);
+        fadeOut.setDuration(600);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                View summary = createRoundSummary(activity);
+                layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
+
+                clearNewRoundLayout(activity);
+                newRound = new Round();
+                updatePoints(activity);
+
+                Animation fadeIn = new AlphaAnimation(0, 1);
+                fadeIn.setDuration(600);
+
+                summary.startAnimation(fadeIn);
+                layoutNewRound.startAnimation(fadeIn);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        this.layoutNewRound.startAnimation(fadeOut);
+    }
+
+    /**
+     * Generates a view that sums up the information on the current newRound.
+     * @param activity used as Context.
+     * @return the generated view.
+     */
+    public View createRoundSummary(@NonNull Activity activity){
+        int tenDPinPX = getPixelFromDp(10);
+
+        LinearLayout layoutSummary = new LinearLayout(activity);
+        LinearLayout.LayoutParams paramS = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        paramS.setMargins(tenDPinPX, tenDPinPX, tenDPinPX, 0);
+        layoutSummary.setLayoutParams(paramS);
+        layoutSummary.setOrientation(LinearLayout.VERTICAL);
+        layoutSummary.setPadding(tenDPinPX, tenDPinPX, tenDPinPX, 0);
+        layoutSummary.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
+
+        LinearLayout layoutRoundTypeLeader = new LinearLayout(activity);
+        LinearLayout.LayoutParams paramRTL = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        layoutRoundTypeLeader.setLayoutParams(paramRTL);
+        layoutRoundTypeLeader.setOrientation(LinearLayout.HORIZONTAL);
+        layoutRoundTypeLeader.setBackgroundColor(activity.getResources().getColor(R.color.light_grey, null));
+        layoutSummary.addView(layoutRoundTypeLeader);
+
+        ImageView imageRoundType = new ImageView(activity);
+        imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, getPixelFromDp(45), 1f));
+        imageRoundType.setAdjustViewBounds(true);
+        imageRoundType.setImageResource(this.newRound.getType().getIdRoundTypeImage());
+
+        TextView textLeader = new TextView(activity);
+        textLeader.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+        textLeader.setText(this.newRound.getLeaderPlayerName(this.beloteGame));
+        textLeader.setTextColor(activity.getResources().getColor(R.color.black, null));
+        textLeader.setGravity(Gravity.CENTER);
+        textLeader.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
+        if((this.newRound.leaderIsEquipA() && (this.newRound.getWinner() != -1)) || (!this.newRound.leaderIsEquipA() && (this.newRound.getWinner() != 1))){
+            textLeader.setPaintFlags(textLeader.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+        }
+        textLeader.setBackgroundColor(activity.getResources().getColor(this.newRound.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
+
+        if(this.newRound.leaderIsEquipA()){
+            layoutRoundTypeLeader.addView(textLeader);
+            layoutRoundTypeLeader.addView(imageRoundType);
+        }else{
+            layoutRoundTypeLeader.addView(imageRoundType);
+            layoutRoundTypeLeader.addView(textLeader);
+        }
+
+        LinearLayout layoutScore = new LinearLayout(activity);
+        layoutScore.setLayoutParams(paramRTL);
+        layoutScore.setOrientation(LinearLayout.HORIZONTAL);
+        layoutSummary.addView(layoutScore);
+
+        TextView textPointA = new TextView(activity);
+        LinearLayout.LayoutParams paramText = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        textPointA.setLayoutParams(paramText);
+        textPointA.setText(String.valueOf(this.newRound.getFinalPoints(true)));
+        textPointA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+        textPointA.setGravity(Gravity.CENTER);
+        textPointA.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
+        layoutScore.addView(textPointA);
+
+        TextView textPointB = new TextView(activity);
+        textPointB.setLayoutParams(paramText);
+        textPointB.setText(String.valueOf(this.newRound.getFinalPoints(false)));
+        textPointB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+        textPointB.setGravity(Gravity.CENTER);
+        textPointB.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
+        layoutScore.addView(textPointB);
+
+        return layoutSummary;
+    }
+
+    public static int getPixelFromDp(int dp){
+        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
+        return Math.round(dp * (metrics.densityDpi / 160f));
     }
 }

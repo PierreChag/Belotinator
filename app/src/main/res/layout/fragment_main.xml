@@ -4,10 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clickable="true"
-    android:focusableInTouchMode="true"
-    tools:context=".MainFragment"
-    android:focusable="true">
+    tools:context=".MainFragment">
 
     <Button
         android:id="@+id/button_players"
