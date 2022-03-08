@@ -3,6 +3,7 @@ package com.poulpinou.belotinator.core;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.poulpinou.belotinator.R;
 
@@ -34,10 +35,28 @@ public class Player {
         savePlayers();
     }
 
+    /**
+     * @param playerId:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     * @return true if the player is in EquipA, else otherwise.
+     */
+    public static boolean isEquipA(int playerId){
+        return playerId == 1 || playerId == 3;
+    }
+
+    /**
+     * @return the unique UUID of this player.
+     */
     public UUID getUuid() {
         return this.uuid;
     }
 
+    /**
+     * @return the name of this player.
+     */
     public String getName(){
         return this.name;
     }
@@ -49,7 +68,7 @@ public class Player {
     }
 
     /**
-     * Remove the player in parameter from the player list and from the save file.
+     * Removes the player in parameter from the player list and from the save file.
      * @param player The player to be removed.
      */
     public static void removePlayer(Player player) {
@@ -58,9 +77,9 @@ public class Player {
     }
 
     /**
-     * Check first if a json file containing the list of player exists.
-     * Create one if needed with the new player saved.
-     * Replace the existing one with the new list of players.
+     * Checks first if a json file containing the list of player exists.
+     * Creates one if needed with the new player saved.
+     * Replaces the existing one with the new list of players.
      */
     public static void savePlayers(){
         JSONArray playersArrayJson = new JSONArray();
@@ -74,16 +93,16 @@ public class Player {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        FileHandler.saveJSONStringToFile(FileHandler.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
+        Utils.saveJSONStringToFile(Utils.getMainDirectoryFile(), Utils.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
     }
 
     /**
-     * Read the JSON file storing the list of player. Create an instance of Player for each entry found.
+     * Reads the JSON file storing the list of player. Create an instance of Player for each entry found.
      * @return the ArrayList containing the list of all loaded players.
      */
     public static ArrayList<Player> loadPlayersList(){
         ArrayList<Player> list = new ArrayList<>();
-        String fileToString = FileHandler.getJSONStringFromFile(FileHandler.PLAYERS_LIST_FILE_NAME);
+        String fileToString = Utils.getJSONStringFromFile(Utils.getMainDirectoryFile(), Utils.PLAYERS_LIST_FILE_NAME);
         if(fileToString != null){
             try {
                 // Getting data JSON Array nodes
@@ -102,8 +121,8 @@ public class Player {
     }
 
     /**
-     * @param context used to get "no player selected" string.
-     * @return An ArrayList starting with the "no player selected" string, then the list of all player names.
+     * @param context used to get the resource "no player selected" string.
+     * @return an ArrayList starting with the "no player selected" string, then the list of all player names.
      */
     public static ArrayList<String> getStringPlayerList(@NonNull Context context){
         ArrayList<String> list = new ArrayList<>();
@@ -120,5 +139,20 @@ public class Player {
      */
     public static Player getPlayerFromListIndex(int selectedItemPosition) {
         return PLAYERS_LIST.get(selectedItemPosition - 1);
+    }
+
+    /**
+     * @param uuid the loaded UUID of the player.
+     * @return the corresponding instance of Player. Returns null if the player can't be find.
+     */
+    @Nullable
+    public static Player getPlayerFromUUID(UUID uuid) {
+        for(Player player : PLAYERS_LIST){
+            if(player.getUuid().equals(uuid)){
+                return player;
+            }
+        }
+        //TODO Handle the deletion of a player !!
+        return PLAYERS_LIST.get(0);
     }
 }

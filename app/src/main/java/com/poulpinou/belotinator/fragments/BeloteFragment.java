@@ -1,22 +1,17 @@
-package com.poulpinou.belotinator;
+package com.poulpinou.belotinator.fragments;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -37,45 +32,37 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
+import com.poulpinou.belotinator.R;
 import com.poulpinou.belotinator.core.Belote;
 import com.poulpinou.belotinator.core.DeclarationType;
 import com.poulpinou.belotinator.core.Player;
 import com.poulpinou.belotinator.core.Round;
 import com.poulpinou.belotinator.core.RoundType;
+import com.poulpinou.belotinator.core.Utils;
+import com.poulpinou.belotinator.fragments.adapters.AllDeclarationsAdapter;
+import com.poulpinou.belotinator.fragments.adapters.OneDeclarationAdapter;
 
 import java.util.Calendar;
 
 public class BeloteFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
-    private static int SCREEN_HEIGHT = 0;
+    //Variables
     private int emptyPlayerCount;
     private Belote beloteGame;
     private Round newRound = new Round();
     private DeclarationType newDeclaration = null;
 
+    //Components
     private EditText editTextRawPointsA, editTextRawPointsB;
-    private TextView textViewFinalPointsA, textViewFinalPointsB, textViewTotalPointsA, textViewTotalPointsB;
+    private TextView textViewFinalPointsA, textViewFinalPointsB, textViewTotalPointsA, textViewTotalPointsB, textViewPointTips;
     private LinearLayout layoutBelote, layoutNewRound;
 
-    private void setScreenHeight() {
-        if(this.getContext() != null){
-            Display display = ((WindowManager) this.getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-            Point size = new Point();
-            display.getSize(size);
-            SCREEN_HEIGHT = size.y;
-        }
-        SCREEN_HEIGHT = 1000;
-    }
-    //TODO Ajouter la phrase "L'équipe A/B doit marquer X points."
-
-    public BeloteFragment() {
-        // Required empty public constructor
-    }
+    //Required empty public constructor
+    public BeloteFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setScreenHeight();
     }
 
     @Override
@@ -83,6 +70,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         return inflater.inflate(R.layout.fragment_belote, container, false);
     }
 
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Activity activity = this.getActivity();
@@ -106,6 +94,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             this.setupSaveRoundButton(activity, activity.findViewById(R.id.button_save_round));
             this.textViewTotalPointsA = activity.findViewById(R.id.equipA_points);
             this.textViewTotalPointsB = activity.findViewById(R.id.equipB_points);
+            this.textViewPointTips = activity.findViewById(R.id.text_points_tips);
             this.layoutBelote = activity.findViewById(R.id.belote_layout);
             this.layoutNewRound = activity.findViewById(R.id.belote_new_round);
         }
@@ -139,7 +128,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 newRound.setRoundType(roundType);
                 ImageButton oldButton = getActivity().findViewById(getButtonRoundTypeId(roundType));
                 oldButton.setImageResource(roundType.getIdRoundTypeImageShadow());
-                this.updatePoints(getActivity());
+                this.updatePointsNewRound(getActivity());
             }
         });
     }
@@ -154,7 +143,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 builder.setView(modifiedView);
 
                 GridView grid = modifiedView.findViewById(R.id.declaration_grid);
-                grid.setAdapter(new DeclarationType.AllDeclarationsAdapter(activity));
+                grid.setAdapter(new AllDeclarationsAdapter(activity));
                 grid.setOnItemClickListener((adapterView, view, position, id) -> {
                     view.setBackgroundColor(this.getResources().getColor(R.color.light_grey, null));
                     if(newDeclaration != null){
@@ -177,8 +166,8 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                         LinearLayout layoutB = getActivity().findViewById(R.id.layout_declarations_b);
                         ImageView iv = getDeclarationImageView(activity, newDeclaration);
                         iv.setId(newRound.addDeclaration(spinnerPlayer.getSelectedItemPosition(), newDeclaration));
-                        this.updateFinalPoints(activity);
-                        if(Belote.isEquipA(spinnerPlayer.getSelectedItemPosition())){
+                        this.updateFinalPointsNewRound(activity);
+                        if(Player.isEquipA(spinnerPlayer.getSelectedItemPosition())){
                             LinearLayout layoutA = getActivity().findViewById(R.id.layout_declarations_a);
                             iv.setBackgroundColor(activity.getResources().getColor(R.color.equip_A, null));
                             layoutA.addView(iv, layoutA.indexOfChild(layoutB));
@@ -200,7 +189,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         linearLayout.setOnClickListener(v -> {
             Activity activity = this.getActivity();
             if(activity != null){
-                DeclarationType.OneDeclarationAdapter adapter = new DeclarationType.OneDeclarationAdapter(
+                OneDeclarationAdapter adapter = new OneDeclarationAdapter(
                         activity,
                         android.R.layout.select_dialog_item,
                         android.R.id.text1,
@@ -212,7 +201,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     View declarationView = activity.findViewById(newRound.getDeclarationViewId(item));
                     ((ViewGroup) declarationView.getParent()).removeView(declarationView);
                     newRound.removeDeclaration(item);
-                    updateFinalPoints(activity);
+                    updateFinalPointsNewRound(activity);
                     dialog.dismiss();
                 });
                 builder.setNegativeButton(R.string.cancel, (dialog, id) -> dialog.cancel());
@@ -221,14 +210,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         });
     }
 
-
-
     private void setupSaveRoundButton(@NonNull Activity activity, Button button) {
         button.setOnClickListener(v -> {
             if(this.newRound.canBeSaved()){
                 this.beloteGame.addRound(this.newRound);
-                this.fadeAndReset(activity);
-                this.setScores();
+                this.fadeRoundAndAddNextRound(activity);
+                this.updateDisplayedScores();
             }else{
                 Toast.makeText(activity, R.string.missing_value_round, Toast.LENGTH_LONG).show();
             }
@@ -279,7 +266,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 if(newRound.getRawPoints(equipA) != points && getActivity() != null){
                     newRound.setPointsEquip(equipA, points);
                     otherEquipEditText.setText(String.valueOf(newRound.getRawPoints(!equipA)));
-                    updateFinalPoints(getActivity());
+                    updateFinalPointsNewRound(getActivity());
                 }
             }
         });
@@ -297,7 +284,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         ImageView iv = new ImageView(context);
         iv.setImageResource(declarationType.getIdIcon());
         iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        int px = getPixelFromDp(30);
+        int px = Utils.getPixelFromDp(30);
         iv.setLayoutParams(new LinearLayout.LayoutParams(px, px));
         return iv;
     }
@@ -327,12 +314,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             if(parent.getId() == R.id.spinner_new_leader){
                 //onItemSelected event for the spinners used to set the leader player.
                 this.newRound.setLeaderPlayer(pos);
-                this.updatePoints(this.getActivity());
+                this.updatePointsNewRound(this.getActivity());
 
             }else if(parent.getId() == R.id.spinner_new_first){
                 //onItemSelected event for the spinners used to set the first player.
                 this.newRound.setStartingPlayer(pos);
-                this.updatePoints(this.getActivity());
+                this.updatePointsNewRound(this.getActivity());
 
             }else if(parent.getId() == R.id.spinner_playerA_equipA
                     || parent.getId() == R.id.spinner_playerB_equipA
@@ -360,9 +347,10 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                                 Player.getPlayerFromListIndex(spinnerAB.getSelectedItemPosition()),
                                 Player.getPlayerFromListIndex(spinnerBA.getSelectedItemPosition()),
                                 Player.getPlayerFromListIndex(spinnerBB.getSelectedItemPosition()),
-                                Belote.DEFAULT_VICTORY_POINTS);
+                                Utils.DEFAULT_VICTORY_POINTS);
+                        this.beloteGame.saveBelote();
                     }
-                    this.setScores();
+                    this.updateDisplayedScores();
                     ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(this.getActivity()));
                     adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                     Spinner spinnerFirst = this.getActivity().findViewById(R.id.spinner_new_first);
@@ -373,6 +361,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                             this.getActivity().findViewById(R.id.belote_equip_maker_layout),
                             this.getActivity().findViewById(R.id.belote_equip_summary_layout),
                             this.getActivity().findViewById(R.id.belote_equip_score_layout),
+                            this.getActivity().findViewById(R.id.line),
                             this.getActivity().findViewById(R.id.belote_new_round));
                 }
             }
@@ -382,7 +371,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     /**
      * Sets the current total points in beloteGame in the 2 TextViews.
      */
-    private void setScores(){
+    private void updateDisplayedScores(){
         this.textViewTotalPointsA.setText(String.valueOf(beloteGame.getEquipAPoints()));
         this.textViewTotalPointsB.setText(String.valueOf(beloteGame.getEquipBPoints()));
     }
@@ -408,7 +397,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * Finally, it updates the final points to match the raw points.
      * @param context is the current context.
      */
-    public void updatePoints(@NonNull Context context){
+    public void updatePointsNewRound(@NonNull Context context){
         if(this.newRound.canAddPoints()){
             switchEditText(this.editTextRawPointsA, true);
             switchEditText(this.editTextRawPointsB, true);
@@ -417,7 +406,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             switchEditText(this.editTextRawPointsB, false);
             this.newRound.clearPoints();
         }
-        this.updateFinalPoints(context);
+        this.updateFinalPointsNewRound(context);
     }
 
     /**
@@ -425,7 +414,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * Then updates the 2 TextViews showing the final Points.
      * @param context is the current context.
      */
-    public void updateFinalPoints(@NonNull Context context){
+    public void updateFinalPointsNewRound(@NonNull Context context){
         if(this.newRound.canAddPoints()){
             this.newRound.computesFinalPoints();
             this.textViewFinalPointsA.setText(String.valueOf(newRound.getFinalPoints(true)));
@@ -444,11 +433,13 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
                     this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.equip_B, null));
             }
+            this.textViewPointTips.setText(this.getString(R.string.point_tips, this.newRound.getLeaderPlayerName(this.beloteGame), String.valueOf(this.newRound.getMinimalPointsForLeader())));
         }else{
             this.textViewFinalPointsA.setText("0");
             this.textViewFinalPointsA.setBackgroundColor(0x00000000);
             this.textViewFinalPointsB.setText("0");
             this.textViewFinalPointsB.setBackgroundColor(0x00000000);
+            this.textViewPointTips.setText("");
         }
     }
 
@@ -481,14 +472,14 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
     public static void slideIn(View viewIn){
         viewIn.setVisibility(View.VISIBLE);
-        TranslateAnimation animIn = new TranslateAnimation(0, 0, -SCREEN_HEIGHT, 0);
+        TranslateAnimation animIn = new TranslateAnimation(0, 0, -Utils.getScreenHeight(viewIn.getContext()), 0);
         animIn.setDuration(600);
         animIn.setFillAfter(true);
         viewIn.startAnimation(animIn);
     }
 
     public static void slide(View viewOut, View... viewsIn){
-        TranslateAnimation animOut = new TranslateAnimation(0, 0, 0, -SCREEN_HEIGHT);
+        TranslateAnimation animOut = new TranslateAnimation(0, 0, 0, -Utils.getScreenHeight(viewOut.getContext()));
         animOut.setDuration(600);
         animOut.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -508,7 +499,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         viewOut.startAnimation(animOut);
     }
 
-    public void fadeAndReset(@NonNull Activity activity){
+    public void fadeRoundAndAddNextRound(@NonNull Activity activity){
         Animation fadeOut = new AlphaAnimation(1, 0);
         fadeOut.setDuration(600);
         fadeOut.setAnimationListener(new Animation.AnimationListener() {
@@ -520,15 +511,22 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 View summary = createRoundSummary(activity);
                 layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
 
-                clearNewRoundLayout(activity);
-                newRound = new Round();
-                updatePoints(activity);
-
                 Animation fadeIn = new AlphaAnimation(0, 1);
                 fadeIn.setDuration(600);
 
-                summary.startAnimation(fadeIn);
-                layoutNewRound.startAnimation(fadeIn);
+                if(beloteGame.getWinner() == 0){
+                    clearNewRoundLayout(activity);
+                    newRound = new Round();
+                    updatePointsNewRound(activity);
+
+                    summary.startAnimation(fadeIn);
+                    layoutNewRound.startAnimation(fadeIn);
+                }else{
+                    View winner = createWinnerView(activity);
+                    layoutBelote.addView(winner);
+                    summary.startAnimation(fadeIn);
+                    layoutNewRound.setVisibility(View.GONE);
+                }
             }
 
             @Override
@@ -543,7 +541,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * @return the generated view.
      */
     public View createRoundSummary(@NonNull Activity activity){
-        int tenDPinPX = getPixelFromDp(10);
+        int tenDPinPX = Utils.getPixelFromDp(10);
 
         LinearLayout layoutSummary = new LinearLayout(activity);
         LinearLayout.LayoutParams paramS = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -561,7 +559,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         layoutSummary.addView(layoutRoundTypeLeader);
 
         ImageView imageRoundType = new ImageView(activity);
-        imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, getPixelFromDp(45), 1f));
+        imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Utils.getPixelFromDp(45), 1f));
         imageRoundType.setAdjustViewBounds(true);
         imageRoundType.setImageResource(this.newRound.getType().getIdRoundTypeImage());
 
@@ -609,8 +607,50 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         return layoutSummary;
     }
 
-    public static int getPixelFromDp(int dp){
-        DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();
-        return Math.round(dp * (metrics.densityDpi / 160f));
+    /**
+     * Generates a view for the winner.
+     * @param activity used as Context.
+     * @return the generated view.
+     */
+    private View createWinnerView(Activity activity) {
+        int tenDPinPX = Utils.getPixelFromDp(10);
+
+        LinearLayout layoutWinner = new LinearLayout(activity);
+        LinearLayout.LayoutParams paramS = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        paramS.setMargins(tenDPinPX, tenDPinPX, tenDPinPX, tenDPinPX);
+        layoutWinner.setLayoutParams(paramS);
+        layoutWinner.setOrientation(LinearLayout.VERTICAL);
+        layoutWinner.setPadding(tenDPinPX, tenDPinPX, tenDPinPX, tenDPinPX);
+        layoutWinner.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
+        layoutWinner.setGravity(Gravity.CENTER);
+
+        TextView textWinnerLabel = new TextView(activity);
+        textWinnerLabel.setLayoutParams(paramS);
+        textWinnerLabel.setText(R.string.winner);
+        textWinnerLabel.setTextColor(activity.getResources().getColor(R.color.white, null));
+        textWinnerLabel.setGravity(Gravity.CENTER);
+        textWinnerLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP,30);
+        layoutWinner.addView(textWinnerLabel);
+
+        TextView textWinnerTeam = new TextView(activity);
+        textWinnerTeam.setLayoutParams(paramS);
+        if(this.beloteGame.getWinner() == -1){
+            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.equipA_label)).getText());
+        }else{
+            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.equipB_label)).getText());
+        }
+        textWinnerTeam.setGravity(Gravity.CENTER);
+        textWinnerTeam.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
+        layoutWinner.addView(textWinnerTeam);
+
+        Button buttonClose = new Button(activity);
+        buttonClose.setText(R.string.close);
+        buttonClose.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        buttonClose.setOnClickListener(v -> activity.onBackPressed());
+        layoutWinner.addView(buttonClose);
+
+        return layoutWinner;
     }
 }

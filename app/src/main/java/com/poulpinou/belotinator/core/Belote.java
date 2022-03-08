@@ -3,6 +3,7 @@ package com.poulpinou.belotinator.core;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.poulpinou.belotinator.R;
 
@@ -14,19 +15,20 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.UUID;
 
 public class Belote {
 
-    public static final int DEFAULT_VICTORY_POINTS = 3000;
-    private static final String DATE_FORMAT = "dd-MM-yyyy - HH:mm";
-
+    public static final ArrayList<Belote> BELOTES_LIST = loadBelotesList();
     private final long dateInMillis;
     private final Player playerAEquipA, playerBEquipA, playerAEquipB, playerBEquipB;
     private final int victoryPoints;
+    private boolean done = false;
     private int equipAPoints, equipBPoints;
     private final ArrayList<Round> roundsList = new ArrayList<>();
 
     /**
+     * Creates a Belote instance.
      * @param dateInMillis When the belote game happened in milliseconds
      * @param playerAEquipA Player A in equip A (id: 1)
      * @param playerAEquipB Player A in equip B (id: 2)
@@ -41,7 +43,6 @@ public class Belote {
         this.playerBEquipA = playerBEquipA;
         this.playerBEquipB = playerBEquipB;
         this.victoryPoints = victoryPoints;
-        this.saveBelote();
     }
 
     /**
@@ -51,10 +52,16 @@ public class Belote {
     public void addRound(Round newRound){
         this.roundsList.add(newRound);
         if(newRound.isInDispute()){
-
+            //TODO in Dispute !!!!!
         }else{
             this.equipAPoints += newRound.getFinalPoints(true);
             this.equipBPoints += newRound.getFinalPoints(false);
+        }
+        if(this.getEquipAPoints() > this.getEquipBPoints() && this.getEquipAPoints() > this.victoryPoints){
+            this.done = true;
+        }
+        if(this.getEquipBPoints() > this.getEquipAPoints() && this.getEquipBPoints() > this.victoryPoints){
+            this.done = true;
         }
         this.saveBelote();
     }
@@ -74,36 +81,23 @@ public class Belote {
     }
 
     /**
-     * Check first if a json file containing the list of player exists.
-     * Create one if needed with the new player saved.
-     * Replace the existing one with the new list of players.
+     * @return True if the belote game is done.
      */
-    public void saveBelote(){
-        JSONObject thisBeloteJson = new JSONObject();
-        try {
-            thisBeloteJson.put("date", this.dateInMillis);
-            thisBeloteJson.put("playerAEquipA", this.playerAEquipA.getUuid().toString());
-            thisBeloteJson.put("playerBEquipA", this.playerBEquipA.getUuid().toString());
-            thisBeloteJson.put("playerAEquipB", this.playerAEquipB.getUuid().toString());
-            thisBeloteJson.put("playerBEquipB", this.playerBEquipB.getUuid().toString());
-            thisBeloteJson.put("victoryPoints", this.victoryPoints);
-            JSONArray roundsArrayJson = new JSONArray();
-            for (Round round : this.roundsList){
-                roundsArrayJson.put(round.getJson());
-            }
-            thisBeloteJson.put("roundsList", roundsArrayJson);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        String fileName = this.getDateInString() + ".json";
-        FileHandler.saveJSONStringToFile(fileName.replace(":", "-"), thisBeloteJson.toString());
+    public boolean isDone(){
+        return this.done;
     }
 
     /**
-     * @return The date of creation of this belote game ins String format
+     * @return an integer corresponding to the winner.
+     * <p>- Not enough points or equality : 0
+     * <p>- Equip A: -1
+     * <p>- Equip B: 1
      */
-    public String getDateInString(){
-        return new SimpleDateFormat(DATE_FORMAT, Locale.getDefault()).format(new Date(this.dateInMillis));
+    public int getWinner(){
+        if(!this.done){
+            return 0;
+        }
+        return (this.getEquipAPoints() > this.getEquipBPoints()) ? -1 : 1;
     }
 
     /**
@@ -127,10 +121,10 @@ public class Belote {
 
     /**
      * @param id of the player:
-     * - 1: playerA EquipA
-     * - 2: playerA EquipB
-     * - 3: playerB EquipA
-     * - 4: playerB EquipB
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
      * @return the instance of the corresponding player.
      */
     public Player getPlayerFromId(int id){
@@ -148,14 +142,91 @@ public class Belote {
     }
 
     /**
-     * @param playerId:
-     * - 1: playerA EquipA
-     * - 2: playerA EquipB
-     * - 3: playerB EquipA
-     * - 4: playerB EquipB
-     * @return true if the player is in EquipA, else otherwise.
+     * @return The date of creation of this belote game ins String format
      */
-    public static boolean isEquipA(int playerId){
-        return playerId == 1 || playerId == 3;
+    public String getDateInString(){
+        return new SimpleDateFormat(Utils.DATE_FORMAT, Locale.getDefault()).format(new Date(this.dateInMillis)).replace(":", "-");
+    }
+
+    /**
+     * Reads the JSON files stored in the folder. Create an instance of Belote for each entry found.
+     * @return the ArrayList containing the list of all loaded belotes.
+     */
+    public static ArrayList<Belote> loadBelotesList(){
+        ArrayList<Belote> list = new ArrayList<>();
+        ArrayList<String> filesToString = Utils.getAllJSONStringFromDirectory(Utils.getBelotesDirectory());
+        for(String fileToString : filesToString){
+            Belote belote = loadBelote(fileToString);
+            if(belote != null)
+                list.add(belote);
+        }
+        return list;
+    }
+
+    /**
+     * @param beloteString is the content of the file where the Belote was saved.
+     * @return an instance of Belote with all the information saved.
+     */
+    @Nullable
+    private static Belote loadBelote(String beloteString) {
+        Belote loadedBelote;
+        try {
+            // Getting data JSON Object
+            JSONObject beloteJSON = new JSONObject(beloteString);
+            loadedBelote = new Belote(
+                    beloteJSON.getLong("date"),
+                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerAEquipA"))),
+                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipA"))),
+                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerAEquipB"))),
+                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipB"))),
+                    beloteJSON.getInt("victoryPoints")
+            );
+            loadedBelote.done = beloteJSON.getBoolean("done");
+            loadedBelote.equipAPoints = beloteJSON.getInt("equipAPoints");
+            loadedBelote.equipBPoints = beloteJSON.getInt("equipBPoints");
+
+            // looping through all rounds
+            JSONArray roundsArrayJson = beloteJSON.getJSONArray("roundsList");
+            for(int i = 0; i < roundsArrayJson.length(); i++) {
+                Round round = Round.loadJSON(roundsArrayJson.getJSONObject(i));
+                if(round == null){
+                    return null;
+                }
+                loadedBelote.roundsList.add(round);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return loadedBelote;
+    }
+
+    /**
+     * Check first if a json file containing the list of player exists.
+     * Create one if needed with the new player saved.
+     * Replace the existing one with the new list of players.
+     */
+    public void saveBelote(){
+        JSONObject thisBeloteJson = new JSONObject();
+        try {
+            thisBeloteJson.put("date", this.dateInMillis);
+            thisBeloteJson.put("playerAEquipA", this.playerAEquipA.getUuid().toString());
+            thisBeloteJson.put("playerBEquipA", this.playerBEquipA.getUuid().toString());
+            thisBeloteJson.put("playerAEquipB", this.playerAEquipB.getUuid().toString());
+            thisBeloteJson.put("playerBEquipB", this.playerBEquipB.getUuid().toString());
+            thisBeloteJson.put("victoryPoints", this.victoryPoints);
+            thisBeloteJson.put("done", this.done);
+            thisBeloteJson.put("equipAPoints", this.equipAPoints);
+            thisBeloteJson.put("equipBPoints", this.equipBPoints);
+            JSONArray roundsArrayJson = new JSONArray();
+            for (Round round : this.roundsList){
+                roundsArrayJson.put(round.getJson());
+            }
+            thisBeloteJson.put("roundsList", roundsArrayJson);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        String fileName = this.getDateInString() + ".json";
+        Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), fileName, thisBeloteJson.toString());
     }
 }

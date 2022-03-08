@@ -1,4 +1,4 @@
-package com.poulpinou.belotinator;
+package com.poulpinou.belotinator.fragments;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -14,13 +14,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.poulpinou.belotinator.ActionBarTitleSetter;
+import com.poulpinou.belotinator.R;
 import com.poulpinou.belotinator.core.Player;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PlayerStatsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class PlayerStatsFragment extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/MainFragment"
-        android:name="com.poulpinou.belotinator.MainFragment"
+        android:name="com.poulpinou.belotinator.fragments.MainFragment"
         android:label="@string/main_fragment_label"
         tools:layout="@layout/fragment_main">
 
@@ -35,7 +35,7 @@
     </fragment>
     <fragment
         android:id="@+id/PlayersFragment"
-        android:name="com.poulpinou.belotinator.PlayersFragment"
+        android:name="com.poulpinou.belotinator.fragments.PlayersFragment"
         android:label="@string/players_fragment_label"
         tools:layout="@layout/fragment_players">
 
@@ -49,12 +49,12 @@
     </fragment>
     <fragment
         android:id="@+id/PlayerStatsFragment"
-        android:name="com.poulpinou.belotinator.PlayerStatsFragment"
+        android:name="com.poulpinou.belotinator.fragments.PlayerStatsFragment"
         android:label="@string/player_stats_fragment_label"
         tools:layout="@layout/fragment_player_stats" />
     <fragment
         android:id="@+id/HistoricFragment"
-        android:name="com.poulpinou.belotinator.HistoricFragment"
+        android:name="com.poulpinou.belotinator.fragments.HistoricFragment"
         android:label="@string/historic_fragment_label"
         tools:layout="@layout/fragment_historic" >
         <action
@@ -63,7 +63,7 @@
     </fragment>
     <fragment
         android:id="@+id/BeloteFragment"
-        android:name="com.poulpinou.belotinator.BeloteFragment"
+        android:name="com.poulpinou.belotinator.fragments.BeloteFragment"
         android:label="@string/belote_fragment_label"
         tools:layout="@layout/fragment_belote" />
 </navigation>

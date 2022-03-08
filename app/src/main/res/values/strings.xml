@@ -9,8 +9,6 @@
     <string name="previous">Previous</string>
     <string name="fab_legend">Button to add new game or player.</string>
     <string name="action_delete">Delete</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="warning">Warning !</string>
     <string name="confirm_player_delete">Do you want to delete the player %1$s ?</string>
     <string name="yes">Yes</string>
@@ -39,5 +37,12 @@
     <string name="select_first">"Select a player and a declaration \!"</string>
     <string name="remove_declaration">Select the declaration to delete</string>
     <string name="declaration_legend">Declaration icon</string>
-    <string name="missing_value_round">Please fill up all the informations first !</string>
+    <string name="missing_value_round">Please fill up all the information first !</string>
+    <string name="point_tips">%1$s must obtain at least %2$s points.</string>
+    <string name="winner">Winners:</string>
+    
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="close">Close</string>
+    <string name="ongoing_games">Ongoing games:</string>
 </resources>

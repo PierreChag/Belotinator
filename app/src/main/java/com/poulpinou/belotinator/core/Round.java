@@ -2,6 +2,8 @@ package com.poulpinou.belotinator.core;
 
 import android.view.View;
 
+import androidx.annotation.Nullable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,8 +11,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 public class Round {
-
-    public static final int POINTS_CAPOT = 90;
 
     private RoundType type = null;
     private int startingPlayerId = 0, leaderPlayerId = 0;
@@ -48,7 +48,7 @@ public class Round {
 
 
     public boolean leaderIsEquipA() {
-        return Belote.isEquipA(this.leaderPlayerId);
+        return Player.isEquipA(this.leaderPlayerId);
     }
 
     /**
@@ -72,6 +72,14 @@ public class Round {
      */
     public int getRawPoints(boolean equipA){
         return equipA ? this.rawPointsA : this.rawPointsB;
+    }
+
+    /**
+     * @param equipA is True for Equip A, False for Equip B.
+     * @return the raw Points of the corresponding equip.
+     */
+    public int getDeclarationPoints(boolean equipA) {
+        return equipA ? this.declarationPointsA : this.declarationPointsB;
     }
 
     /**
@@ -116,7 +124,7 @@ public class Round {
     public int addDeclaration(int playerId, DeclarationType declarationType){
         int id = View.generateViewId();
         this.declarationList.add(new PlayerDeclaration(playerId, declarationType, id));
-        if(Belote.isEquipA(playerId)) {
+        if(Player.isEquipA(playerId)) {
             this.declarationPointsA += declarationType.getValue(this.type);
         }else{
             this.declarationPointsB += declarationType.getValue(this.type);
@@ -183,8 +191,8 @@ public class Round {
                 this.finalPointsB = 0;
             }
         }
-        if(this.rawPointsA == 0) this.finalPointsB += POINTS_CAPOT;
-        if(this.rawPointsB == 0) this.finalPointsA += POINTS_CAPOT;
+        if(this.rawPointsA == 0) this.finalPointsB += Utils.POINTS_CAPOT;
+        if(this.rawPointsB == 0) this.finalPointsA += Utils.POINTS_CAPOT;
 
         //The multiplier is only applied in the end
         this.finalPointsA *= this.type.getMultiplier();
@@ -239,6 +247,36 @@ public class Round {
     }
 
     /**
+     * @param roundInJSON the round saved in JSON format.
+     * @return a new instance of Round created with the provided data.
+     */
+    @Nullable
+    public static Round loadJSON(JSONObject roundInJSON){
+        Round loadedRound = new Round();
+        try {
+            loadedRound.setRoundType(RoundType.getRoundType(roundInJSON.getString("type")));
+            loadedRound.setStartingPlayer(roundInJSON.getInt("startingPlayerId"));
+            loadedRound.setLeaderPlayer(roundInJSON.getInt("leaderPlayerId"));
+            loadedRound.rawPointsA = roundInJSON.getInt("rawPointsA");
+            loadedRound.rawPointsB = roundInJSON.getInt("rawPointsB");
+            loadedRound.finalPointsA = roundInJSON.getInt("finalPointsA");
+            loadedRound.finalPointsB = roundInJSON.getInt("finalPointsB");
+
+            // looping through all rounds
+            JSONArray declarationArrayJson = roundInJSON.getJSONArray("declarationsList");
+            for(int i = 0; i < declarationArrayJson.length(); i++) {
+                JSONObject thisDeclarationJson = declarationArrayJson.getJSONObject(i);
+                PlayerDeclaration playerDeclaration = new PlayerDeclaration(thisDeclarationJson.getInt("player"), DeclarationType.getDeclarationType(thisDeclarationJson.getString("type")));
+                loadedRound.declarationList.add(playerDeclaration);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            loadedRound = null;
+        }
+        return loadedRound;
+    }
+
+    /**
      * Set raw Points and final Points to 0.
      */
     public void clearPoints() {
@@ -248,20 +286,31 @@ public class Round {
         this.finalPointsB = 0;
     }
 
+    /**
+     * @return the minimal number of points the leader needed to obtain in order to win the Round.
+     */
+    public int getMinimalPointsForLeader() {
+        return (this.type.getPointsPerRound() + this.declarationPointsA + this.declarationPointsB) / 2 - this.getDeclarationPoints(this.leaderIsEquipA()) + 1;
+    }
+
     public static class PlayerDeclaration{
 
         private final int playerId;
         private final DeclarationType declarationType;
-        private final int viewId;
+        private int viewId;
 
         /**
          * Object used to store each declarations during a round with its player.
          * @param playerId in {1, 2, 3, 4}.
          * @param declarationType of the declaration.
          */
-        public PlayerDeclaration(int playerId, DeclarationType declarationType, int viewId){
+        public PlayerDeclaration(int playerId, DeclarationType declarationType){
             this.playerId = playerId;
             this.declarationType = declarationType;
+        }
+
+        public PlayerDeclaration(int playerId, DeclarationType declarationType, int viewId){
+            this(playerId, declarationType);
             this.viewId = viewId;
         }
 
@@ -288,7 +337,7 @@ public class Round {
         }
 
         /**
-         * @return the view id of the declaration.
+         * @return the view id of the declaration. Return 0 if there is no view associated. //TODO Check les conséquences quand on charge une declaration et donc qu'il n'y pas de viewId.
          */
         public int getViewId() {
             return this.viewId;
@@ -298,7 +347,7 @@ public class Round {
          * @return True if this declaration was made by the equip A.
          */
         public boolean isEquipA(){
-            return Belote.isEquipA(this.getPlayerId());
+            return Player.isEquipA(this.getPlayerId());
         }
     }
 }

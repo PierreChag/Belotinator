@@ -1,4 +1,4 @@
-package com.poulpinou.belotinator;
+package com.poulpinou.belotinator.fragments;
 
 import android.os.Bundle;
 
@@ -8,11 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link HistoricFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.poulpinou.belotinator.R;
+
 public class HistoricFragment extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match

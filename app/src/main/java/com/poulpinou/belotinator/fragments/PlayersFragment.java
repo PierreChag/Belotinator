@@ -1,4 +1,4 @@
-package com.poulpinou.belotinator;
+package com.poulpinou.belotinator.fragments;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.poulpinou.belotinator.R;
 import com.poulpinou.belotinator.core.Player;
 import com.poulpinou.belotinator.databinding.FragmentPlayersBinding;
 
