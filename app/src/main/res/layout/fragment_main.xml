@@ -31,20 +31,27 @@
             android:textSize="20sp" />
 
         <TextView
+            style="@style/TextAppearance.AppCompat.Widget.Button"
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/ongoing_games"
             android:gravity="center"
-            android:background="@color/light_grey"
-            android:textColor="@color/black"
-            android:textSize="24sp"
-            android:paddingBottom="4dp"/>
+            android:background="@color/dark_grey"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:padding="10dp"
+            android:letterSpacing="0.1"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            android:background="@android:color/black" />
 
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/light_grey">
+            android:background="@color/dark_grey">
 
             <LinearLayout
                 android:id="@+id/ongoing_games"

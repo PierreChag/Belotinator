@@ -10,6 +10,9 @@ import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -48,7 +51,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
     //Variables
     private int emptyPlayerCount;
-    private Belote beloteGame;
+    public static Belote selectedBelote;
     private Round newRound = new Round();
     private DeclarationType newDeclaration = null;
 
@@ -56,6 +59,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private EditText editTextRawPointsA, editTextRawPointsB;
     private TextView textViewFinalPointsA, textViewFinalPointsB, textViewTotalPointsA, textViewTotalPointsB, textViewPointTips;
     private LinearLayout layoutBelote, layoutNewRound;
+    private Spinner spinnerAA, spinnerBA, spinnerAB, spinnerBB;
 
     //Required empty public constructor
     public BeloteFragment() {}
@@ -63,6 +67,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.setHasOptionsMenu(true);
     }
 
     @Override
@@ -75,43 +80,99 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         super.onViewCreated(view, savedInstanceState);
         Activity activity = this.getActivity();
         if (activity != null){
-            this.setupAllPlayersSpinners(activity.findViewById(R.id.spinner_playerA_equipA));
-            this.setupAllPlayersSpinners(activity.findViewById(R.id.spinner_playerB_equipA));
-            this.setupAllPlayersSpinners(activity.findViewById(R.id.spinner_playerA_equipB));
-            this.setupAllPlayersSpinners(activity.findViewById(R.id.spinner_playerB_equipB));
-
-            for (RoundType roundType : RoundType.values()){
-                this.setupRoundTypeButton(activity.findViewById(this.getButtonRoundTypeId(roundType)), roundType);
-            }
-            this.setupDeclarationsButton(activity.findViewById(R.id.declaration_button));
-            this.setupRemoveDeclarations(activity.findViewById(R.id.layout_declarations_a));
+            //Put components into variables
+            this.spinnerAA = activity.findViewById(R.id.spinner_playerA_equipA);
+            this.spinnerBA = activity.findViewById(R.id.spinner_playerB_equipA);
+            this.spinnerAB = activity.findViewById(R.id.spinner_playerA_equipB);
+            this.spinnerBB = activity.findViewById(R.id.spinner_playerB_equipB);
             this.editTextRawPointsA = activity.findViewById(R.id.raw_points_A);
             this.editTextRawPointsB = activity.findViewById(R.id.raw_points_B);
             this.textViewFinalPointsA = activity.findViewById(R.id.final_points_A);
             this.textViewFinalPointsB = activity.findViewById(R.id.final_points_B);
-            this.setupRawPointsEditText(this.editTextRawPointsA, this.editTextRawPointsB, true);
-            this.setupRawPointsEditText(this.editTextRawPointsB, this.editTextRawPointsA, false);
-            this.setupSaveRoundButton(activity, activity.findViewById(R.id.button_save_round));
             this.textViewTotalPointsA = activity.findViewById(R.id.equipA_points);
             this.textViewTotalPointsB = activity.findViewById(R.id.equipB_points);
             this.textViewPointTips = activity.findViewById(R.id.text_points_tips);
             this.layoutBelote = activity.findViewById(R.id.belote_layout);
             this.layoutNewRound = activity.findViewById(R.id.belote_new_round);
+
+            //Setup components
+            this.setupAllPlayersSpinners(activity, this.spinnerAA);
+            this.setupAllPlayersSpinners(activity, this.spinnerBA);
+            this.setupAllPlayersSpinners(activity, this.spinnerAB);
+            this.setupAllPlayersSpinners(activity, this.spinnerBB);
+            for (RoundType roundType : RoundType.values()){
+                this.setupRoundTypeButton(activity.findViewById(this.getButtonRoundTypeId(roundType)), roundType);
+            }
+            this.setupDeclarationsButton(activity.findViewById(R.id.declaration_button));
+            this.setupRemoveDeclarations(activity.findViewById(R.id.layout_declarations_a));
+            this.setupRawPointsEditText(this.editTextRawPointsA, this.editTextRawPointsB, true);
+            this.setupRawPointsEditText(this.editTextRawPointsB, this.editTextRawPointsA, false);
+            this.setupSaveRoundButton(activity, activity.findViewById(R.id.button_save_round));
+
+            //If the fragment is created from a saved Belote:
+            if(selectedBelote != null){
+                this.setupEquipLabel(activity);
+                this.updateDisplayedScores();
+                this.setupNewRoundLayout(activity);
+                activity.findViewById(R.id.belote_equip_maker_layout).setVisibility(View.GONE);
+                activity.findViewById(R.id.belote_equip_summary_layout).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.belote_equip_score_layout).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.line).setVisibility(View.VISIBLE);
+                for(Round round : selectedBelote.getRoundsList()){
+                    layoutBelote.addView(this.createRoundSummary(activity, round), layoutBelote.getChildCount() - 1);
+                }
+                if(selectedBelote.isDone()){
+                    this.layoutBelote.addView(this.createWinnerView(activity));
+                }else {
+                    this.layoutNewRound.setVisibility(View.VISIBLE);
+                }
+            }
         }
     }
 
-    private void setupAllPlayersSpinners(Spinner spinner){
-        if (this.getActivity() != null) {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(this.getActivity()));
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinner.setAdapter(adapter);
-            spinner.setOnItemSelectedListener(this);
-        }
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_delete, menu);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private void setupBelotePlayersSpinners(Spinner spinner){
-        if (this.getActivity() != null && this.beloteGame != null) {
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout_big, this.beloteGame.getStringPlayerList(this.getActivity()));
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_delete) {
+            Activity activity = this.getActivity();
+            if(activity != null){
+                if(selectedBelote == null){
+                    activity.onBackPressed();
+                }else{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
+                    builder.setTitle(R.string.warning);
+                    builder.setMessage(R.string.confirm_belote_delete);
+                    builder.setPositiveButton(R.string.yes, (dialog, id1) -> {
+                        dialog.dismiss();
+                        selectedBelote.deleteBelote();
+                        activity.onBackPressed();
+                    });
+                    builder.setNegativeButton("No", (dialog, id12) -> dialog.dismiss());
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setupAllPlayersSpinners(@NonNull Activity activity, Spinner spinner){
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(activity));
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+    }
+
+    private void setupBelotePlayersSpinners(@NonNull Activity activity, Spinner spinner){
+        if (selectedBelote != null) {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.centerer_layout_big, selectedBelote.getStringPlayerList(activity));
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
             spinner.setOnItemSelectedListener(this);
@@ -155,7 +216,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 });
 
                 Spinner spinnerPlayer = modifiedView.findViewById(R.id.spinner_player_declaration);
-                this.setupBelotePlayersSpinners(spinnerPlayer);
+                this.setupBelotePlayersSpinners(activity, spinnerPlayer);
 
                 builder.setTitle(R.string.add_a_declaration);
                 builder.setPositiveButton(R.string.confirm, (dialog, id) -> {
@@ -193,7 +254,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                         activity,
                         android.R.layout.select_dialog_item,
                         android.R.id.text1,
-                        newRound.getDeclarationList().stream().map((Round.PlayerDeclaration declaration) -> declaration.getPlayerName(beloteGame)).toArray(String[]::new),
+                        newRound.getDeclarationList().stream().map((Round.PlayerDeclaration declaration) -> declaration.getPlayerName(selectedBelote)).toArray(String[]::new),
                         newRound.getDeclarationList().stream().mapToInt(declaration -> declaration.getDeclarationType().getIdIcon()).toArray());
                 AlertDialog.Builder builder = new AlertDialog.Builder(activity);
                 builder.setTitle(R.string.remove_declaration);
@@ -213,13 +274,22 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private void setupSaveRoundButton(@NonNull Activity activity, Button button) {
         button.setOnClickListener(v -> {
             if(this.newRound.canBeSaved()){
-                this.beloteGame.addRound(this.newRound);
+                selectedBelote.addRound(this.newRound);
                 this.fadeRoundAndAddNextRound(activity);
                 this.updateDisplayedScores();
             }else{
                 Toast.makeText(activity, R.string.missing_value_round, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void setupEquipLabel(@NonNull Activity activity) {
+        if(selectedBelote != null){
+            TextView equipATextView = activity.findViewById(R.id.equipA_label);
+            equipATextView.setText(this.getString(R.string.equip_label, selectedBelote.getPlayerFromId(1).getName(), selectedBelote.getPlayerFromId(3).getName()));
+            TextView equipBTextView = activity.findViewById(R.id.equipB_label);
+            equipBTextView.setText(this.getString(R.string.equip_label, selectedBelote.getPlayerFromId(2).getName(), selectedBelote.getPlayerFromId(4).getName()));
+        }
     }
 
     /**
@@ -310,16 +380,17 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-        if(this.getActivity() != null){
+        Activity activity = this.getActivity();
+        if(activity != null){
             if(parent.getId() == R.id.spinner_new_leader){
                 //onItemSelected event for the spinners used to set the leader player.
                 this.newRound.setLeaderPlayer(pos);
-                this.updatePointsNewRound(this.getActivity());
+                this.updatePointsNewRound(activity);
 
             }else if(parent.getId() == R.id.spinner_new_first){
                 //onItemSelected event for the spinners used to set the first player.
                 this.newRound.setStartingPlayer(pos);
-                this.updatePointsNewRound(this.getActivity());
+                this.updatePointsNewRound(activity);
 
             }else if(parent.getId() == R.id.spinner_playerA_equipA
                     || parent.getId() == R.id.spinner_playerB_equipA
@@ -327,61 +398,57 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     || parent.getId() == R.id.spinner_playerB_equipB){
                 //onItemSelected event for the spinners used to set the player at the start of the Belote Game.
                 this.emptyPlayerCount = 0;
-                this.tryResetSelectedPlayer(this.getActivity(), parent.getId(), R.id.spinner_playerA_equipA, pos);
-                this.tryResetSelectedPlayer(this.getActivity(), parent.getId(), R.id.spinner_playerB_equipA, pos);
-                this.tryResetSelectedPlayer(this.getActivity(), parent.getId(), R.id.spinner_playerA_equipB, pos);
-                this.tryResetSelectedPlayer(this.getActivity(), parent.getId(), R.id.spinner_playerB_equipB, pos);
+                this.tryResetSelectedPlayer(parent.getId(), this.spinnerAA, pos);
+                this.tryResetSelectedPlayer(parent.getId(), this.spinnerBA, pos);
+                this.tryResetSelectedPlayer(parent.getId(), this.spinnerAB, pos);
+                this.tryResetSelectedPlayer(parent.getId(), this.spinnerBB, pos);
                 if(this.emptyPlayerCount == 0){
-                    Spinner spinnerAA = this.getActivity().findViewById(R.id.spinner_playerA_equipA);
-                    Spinner spinnerBA = this.getActivity().findViewById(R.id.spinner_playerB_equipA);
-                    Spinner spinnerAB = this.getActivity().findViewById(R.id.spinner_playerA_equipB);
-                    Spinner spinnerBB = this.getActivity().findViewById(R.id.spinner_playerB_equipB);
-                    TextView equipATextView = this.getActivity().findViewById(R.id.equipA_label);
-                    equipATextView.setText(this.getString(R.string.equip_label, spinnerAA.getSelectedItem().toString(), spinnerBA.getSelectedItem().toString()));
-                    TextView equipBTextView = this.getActivity().findViewById(R.id.equipB_label);
-                    equipBTextView.setText(this.getString(R.string.equip_label, spinnerAB.getSelectedItem().toString(), spinnerBB.getSelectedItem().toString()));
-                    if(this.beloteGame == null){
-                        this.beloteGame = new Belote(
+                    if(selectedBelote == null){
+                        selectedBelote = new Belote(
                                 Calendar.getInstance().getTimeInMillis(),
-                                Player.getPlayerFromListIndex(spinnerAA.getSelectedItemPosition()),
-                                Player.getPlayerFromListIndex(spinnerAB.getSelectedItemPosition()),
-                                Player.getPlayerFromListIndex(spinnerBA.getSelectedItemPosition()),
-                                Player.getPlayerFromListIndex(spinnerBB.getSelectedItemPosition()),
+                                Player.getPlayerFromListIndex(this.spinnerAA.getSelectedItemPosition()),
+                                Player.getPlayerFromListIndex(this.spinnerAB.getSelectedItemPosition()),
+                                Player.getPlayerFromListIndex(this.spinnerBA.getSelectedItemPosition()),
+                                Player.getPlayerFromListIndex(this.spinnerBB.getSelectedItemPosition()),
                                 Utils.DEFAULT_VICTORY_POINTS);
-                        this.beloteGame.saveBelote();
+                        selectedBelote.saveBelote();
                     }
+                    this.setupEquipLabel(activity);
                     this.updateDisplayedScores();
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(this.getActivity()));
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    Spinner spinnerFirst = this.getActivity().findViewById(R.id.spinner_new_first);
-                    Spinner spinnerLeader = this.getActivity().findViewById(R.id.spinner_new_leader);
-                    this.setupBelotePlayersSpinners(spinnerFirst);
-                    this.setupBelotePlayersSpinners(spinnerLeader);
+                    this.setupNewRoundLayout(activity);
                     slide(
-                            this.getActivity().findViewById(R.id.belote_equip_maker_layout),
-                            this.getActivity().findViewById(R.id.belote_equip_summary_layout),
-                            this.getActivity().findViewById(R.id.belote_equip_score_layout),
-                            this.getActivity().findViewById(R.id.line),
-                            this.getActivity().findViewById(R.id.belote_new_round));
+                            activity.findViewById(R.id.belote_equip_maker_layout),
+                            activity.findViewById(R.id.belote_equip_summary_layout),
+                            activity.findViewById(R.id.belote_equip_score_layout),
+                            activity.findViewById(R.id.line),
+                            this.layoutNewRound);
                 }
             }
         }
+    }
+
+    private void setupNewRoundLayout(@NonNull Activity activity){
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.centerer_layout, Player.getStringPlayerList(activity));
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        Spinner spinnerFirst = activity.findViewById(R.id.spinner_new_first);
+        Spinner spinnerLeader = activity.findViewById(R.id.spinner_new_leader);
+        this.setupBelotePlayersSpinners(activity, spinnerFirst);
+        this.setupBelotePlayersSpinners(activity, spinnerLeader);
     }
 
     /**
      * Sets the current total points in beloteGame in the 2 TextViews.
      */
     private void updateDisplayedScores(){
-        this.textViewTotalPointsA.setText(String.valueOf(beloteGame.getEquipAPoints()));
-        this.textViewTotalPointsB.setText(String.valueOf(beloteGame.getEquipBPoints()));
+        this.textViewTotalPointsA.setText(String.valueOf(selectedBelote.getEquipAPoints()));
+        this.textViewTotalPointsB.setText(String.valueOf(selectedBelote.getEquipBPoints()));
     }
 
-    private void tryResetSelectedPlayer(@NonNull FragmentActivity activity, int selectedSpinnerID, int comparedSpinnerID, int pos){
-        if(selectedSpinnerID != comparedSpinnerID){
-            Spinner spinner = activity.findViewById(comparedSpinnerID);
-            int selectedPos = spinner.getSelectedItemPosition();
+    private void tryResetSelectedPlayer(int selectedSpinnerID, Spinner comparedSpinner, int pos){
+        if(selectedSpinnerID != comparedSpinner.getId()){
+            int selectedPos = comparedSpinner.getSelectedItemPosition();
             if(selectedPos == pos && pos > 0){
-                spinner.setSelection(0);
+                comparedSpinner.setSelection(0);
                 this.emptyPlayerCount++;
             }else if(selectedPos == 0){
                 this.emptyPlayerCount++;
@@ -433,7 +500,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
                     this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.equip_B, null));
             }
-            this.textViewPointTips.setText(this.getString(R.string.point_tips, this.newRound.getLeaderPlayerName(this.beloteGame), String.valueOf(this.newRound.getMinimalPointsForLeader())));
+            this.textViewPointTips.setText(this.getString(R.string.point_tips, this.newRound.getLeaderPlayerName(selectedBelote), String.valueOf(this.newRound.getMinimalPointsForLeader())));
         }else{
             this.textViewFinalPointsA.setText("0");
             this.textViewFinalPointsA.setBackgroundColor(0x00000000);
@@ -508,13 +575,13 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                View summary = createRoundSummary(activity);
+                View summary = createRoundSummary(activity, newRound);
                 layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
 
                 Animation fadeIn = new AlphaAnimation(0, 1);
                 fadeIn.setDuration(600);
 
-                if(beloteGame.getWinner() == 0){
+                if(selectedBelote.getWinner() == 0){
                     clearNewRoundLayout(activity);
                     newRound = new Round();
                     updatePointsNewRound(activity);
@@ -540,7 +607,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * @param activity used as Context.
      * @return the generated view.
      */
-    public View createRoundSummary(@NonNull Activity activity){
+    public View createRoundSummary(@NonNull Activity activity, Round round){
         int tenDPinPX = Utils.getPixelFromDp(10);
 
         LinearLayout layoutSummary = new LinearLayout(activity);
@@ -561,20 +628,20 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         ImageView imageRoundType = new ImageView(activity);
         imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Utils.getPixelFromDp(45), 1f));
         imageRoundType.setAdjustViewBounds(true);
-        imageRoundType.setImageResource(this.newRound.getType().getIdRoundTypeImage());
+        imageRoundType.setImageResource(round.getType().getIdRoundTypeImage());
 
         TextView textLeader = new TextView(activity);
         textLeader.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
-        textLeader.setText(this.newRound.getLeaderPlayerName(this.beloteGame));
+        textLeader.setText(round.getLeaderPlayerName(selectedBelote));
         textLeader.setTextColor(activity.getResources().getColor(R.color.black, null));
         textLeader.setGravity(Gravity.CENTER);
         textLeader.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
-        if((this.newRound.leaderIsEquipA() && (this.newRound.getWinner() != -1)) || (!this.newRound.leaderIsEquipA() && (this.newRound.getWinner() != 1))){
+        if((round.leaderIsEquipA() && (round.getWinner() != -1)) || (!round.leaderIsEquipA() && (round.getWinner() != 1))){
             textLeader.setPaintFlags(textLeader.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         }
-        textLeader.setBackgroundColor(activity.getResources().getColor(this.newRound.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
+        textLeader.setBackgroundColor(activity.getResources().getColor(round.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
 
-        if(this.newRound.leaderIsEquipA()){
+        if(round.leaderIsEquipA()){
             layoutRoundTypeLeader.addView(textLeader);
             layoutRoundTypeLeader.addView(imageRoundType);
         }else{
@@ -590,7 +657,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         TextView textPointA = new TextView(activity);
         LinearLayout.LayoutParams paramText = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
         textPointA.setLayoutParams(paramText);
-        textPointA.setText(String.valueOf(this.newRound.getFinalPoints(true)));
+        textPointA.setText(String.valueOf(round.getFinalPoints(true)));
         textPointA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
         textPointA.setGravity(Gravity.CENTER);
         textPointA.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
@@ -598,7 +665,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
         TextView textPointB = new TextView(activity);
         textPointB.setLayoutParams(paramText);
-        textPointB.setText(String.valueOf(this.newRound.getFinalPoints(false)));
+        textPointB.setText(String.valueOf(round.getFinalPoints(false)));
         textPointB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
         textPointB.setGravity(Gravity.CENTER);
         textPointB.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
@@ -634,7 +701,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
         TextView textWinnerTeam = new TextView(activity);
         textWinnerTeam.setLayoutParams(paramS);
-        if(this.beloteGame.getWinner() == -1){
+        if(selectedBelote.getWinner() == -1){
             textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
             textWinnerTeam.setText(((TextView) activity.findViewById(R.id.equipA_label)).getText());
         }else{
@@ -652,5 +719,11 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         layoutWinner.addView(buttonClose);
 
         return layoutWinner;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        selectedBelote = null;
     }
 }

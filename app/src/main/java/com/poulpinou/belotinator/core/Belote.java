@@ -3,7 +3,6 @@ package com.poulpinou.belotinator.core;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.poulpinou.belotinator.R;
 
@@ -11,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,7 +19,10 @@ import java.util.UUID;
 
 public class Belote {
 
-    public static final ArrayList<Belote> BELOTES_LIST = loadBelotesList();
+    public static final ArrayList<Belote> BELOTES_LIST = new ArrayList<>();
+    static {
+        loadBelotesList();
+    }
     private final long dateInMillis;
     private final Player playerAEquipA, playerBEquipA, playerAEquipB, playerBEquipB;
     private final int victoryPoints;
@@ -43,6 +46,7 @@ public class Belote {
         this.playerBEquipA = playerBEquipA;
         this.playerBEquipB = playerBEquipB;
         this.victoryPoints = victoryPoints;
+        BELOTES_LIST.add(this);
     }
 
     /**
@@ -64,6 +68,13 @@ public class Belote {
             this.done = true;
         }
         this.saveBelote();
+    }
+
+    /**
+     * @return the list of Rounds of this belote.
+     */
+    public ArrayList<Round> getRoundsList() {
+        return this.roundsList;
     }
 
     /**
@@ -142,33 +153,34 @@ public class Belote {
     }
 
     /**
+     * @return The date of creation of this belote game ins String format compact
+     */
+    public String getDateInShortString(){
+        return new SimpleDateFormat(Utils.DATE_FORMAT, Locale.getDefault()).format(new Date(this.dateInMillis));
+    }
+
+    /**
      * @return The date of creation of this belote game ins String format
      */
-    public String getDateInString(){
-        return new SimpleDateFormat(Utils.DATE_FORMAT, Locale.getDefault()).format(new Date(this.dateInMillis)).replace(":", "-");
+    public String getDateInLongString(){
+        return DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT).format(new Date(this.dateInMillis));
     }
 
     /**
      * Reads the JSON files stored in the folder. Create an instance of Belote for each entry found.
-     * @return the ArrayList containing the list of all loaded belotes.
      */
-    public static ArrayList<Belote> loadBelotesList(){
-        ArrayList<Belote> list = new ArrayList<>();
+    public static void loadBelotesList(){
         ArrayList<String> filesToString = Utils.getAllJSONStringFromDirectory(Utils.getBelotesDirectory());
         for(String fileToString : filesToString){
-            Belote belote = loadBelote(fileToString);
-            if(belote != null)
-                list.add(belote);
+            loadBelote(fileToString);
         }
-        return list;
     }
 
     /**
+     * Creates an instance of Belote from the data in parameter, and stores it in the BELOTES_LIST.
      * @param beloteString is the content of the file where the Belote was saved.
-     * @return an instance of Belote with all the information saved.
      */
-    @Nullable
-    private static Belote loadBelote(String beloteString) {
+    private static void loadBelote(String beloteString) {
         Belote loadedBelote;
         try {
             // Getting data JSON Object
@@ -190,15 +202,13 @@ public class Belote {
             for(int i = 0; i < roundsArrayJson.length(); i++) {
                 Round round = Round.loadJSON(roundsArrayJson.getJSONObject(i));
                 if(round == null){
-                    return null;
+                    continue;
                 }
                 loadedBelote.roundsList.add(round);
             }
         } catch (JSONException e) {
             e.printStackTrace();
-            return null;
         }
-        return loadedBelote;
     }
 
     /**
@@ -226,7 +236,15 @@ public class Belote {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        String fileName = this.getDateInString() + ".json";
-        Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), fileName, thisBeloteJson.toString());
+        Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), this.getFileName(), thisBeloteJson.toString());
+    }
+
+    public void deleteBelote() {
+        Utils.deleteFile(Utils.getBelotesDirectory(), this.getFileName());
+        BELOTES_LIST.remove(this);
+    }
+
+    private String getFileName(){
+        return this.getDateInShortString() + ".json";
     }
 }

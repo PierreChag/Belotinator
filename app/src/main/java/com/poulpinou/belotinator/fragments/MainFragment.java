@@ -43,6 +43,7 @@ public class MainFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         this.binding.buttonPlayers.setOnClickListener(view1 -> NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_PlayersFragment));
+        this.binding.buttonHistoric.setOnClickListener(view1 -> NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_HistoricFragment));
     }
 
     @Override
@@ -88,15 +89,16 @@ public class MainFragment extends Fragment {
         paramMainLayout.setMargins(0, 0, 0, tenDPinPX);
         mainLayout.setLayoutParams(paramMainLayout);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
+        mainLayout.setBackgroundColor(activity.getResources().getColor(R.color.white, null));
 
         //Name of the belote game : the date.
         TextView textBeloteTitle = new TextView(activity);
         textBeloteTitle.setLayoutParams(param);
-        textBeloteTitle.setText(belote.getDateInString());
-        textBeloteTitle.setTextColor(activity.getResources().getColor(R.color.white, null));
+        textBeloteTitle.setText(belote.getDateInLongString());
+        textBeloteTitle.setTextColor(activity.getResources().getColor(R.color.dark_grey, null));
         textBeloteTitle.setGravity(Gravity.CENTER);
         textBeloteTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
+        textBeloteTitle.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         mainLayout.addView(textBeloteTitle);
 
         //First horizontal layout that contains the two teams
@@ -116,6 +118,7 @@ public class MainFragment extends Fragment {
         textLeaderA.setBackgroundColor(activity.getResources().getColor(R.color.equip_A, null));
         textLeaderA.setGravity(Gravity.CENTER);
         textLeaderA.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
+        textLeaderA.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         layoutPlayers.addView(textLeaderA);
 
         //Equip B name
@@ -128,6 +131,7 @@ public class MainFragment extends Fragment {
         textLeaderB.setBackgroundColor(activity.getResources().getColor(R.color.equip_B, null));
         textLeaderB.setGravity(Gravity.CENTER);
         textLeaderB.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
+        textLeaderB.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         layoutPlayers.addView(textLeaderB);
 
         //Second horizontal layout that contains the two scores
@@ -156,7 +160,10 @@ public class MainFragment extends Fragment {
         layoutScores.addView(textScoreB);
 
         //OnClickListener that opens the Belote Game
-        mainLayout.setOnClickListener(v -> NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_BeloteFragment));
+        mainLayout.setOnClickListener(v -> {
+            BeloteFragment.selectedBelote = belote;
+            NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_BeloteFragment);
+        });
         return mainLayout;
     }
 

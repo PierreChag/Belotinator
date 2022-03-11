@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class Utils {
 
     public static final int DEFAULT_VICTORY_POINTS = 3000;
-    public static final String DATE_FORMAT = "dd-MM-yyyy - HH:mm";
+    public static final String DATE_FORMAT = "dd-MM-yyyy - HH-mm";
     public static final String MAIN_FOLDER_NAME = "belotinator";
     public static final String BELOTES_FOLDER_NAME = "belotes";
     public static final String PLAYERS_LIST_FILE_NAME = "players_list.json";
@@ -147,6 +147,22 @@ public class Utils {
             }
         }
         return null;
+    }
+
+    /**
+     * Deletes the file with the given name in the directory.
+     * @param directory where the file is located.
+     * @param fileName the name of the file to be deleted.
+     */
+    public static void deleteFile(@Nullable String directory, String fileName){
+        if(directory != null){
+            try {
+                File file = new File(directory, fileName);
+                file.delete();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
