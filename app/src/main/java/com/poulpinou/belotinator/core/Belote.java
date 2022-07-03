@@ -52,22 +52,55 @@ public class Belote {
     /**
      * Adds the round in input in the Belote round list, computes the total points, and save to json.
      * @param newRound to be added.
+     * @return the number of previous rounds that need to be updated because of dispute resolution.
      */
-    public void addRound(Round newRound){
+    public int addRound(Round newRound){
         this.roundsList.add(newRound);
-        if(newRound.isInDispute()){
-            //TODO in Dispute !!!!!
-        }else{
-            this.equipAPoints += newRound.getFinalPoints(true);
-            this.equipBPoints += newRound.getFinalPoints(false);
-        }
+        this.equipAPoints += newRound.getFinalPoints(true);
+        this.equipBPoints += newRound.getFinalPoints(false);
+        int roundsToUpdate = this.resolvePreviousDisputes(newRound.getWinner());
         if(this.getEquipAPoints() > this.getEquipBPoints() && this.getEquipAPoints() > this.victoryPoints){
             this.done = true;
+            this.computeStats();
         }
         if(this.getEquipBPoints() > this.getEquipAPoints() && this.getEquipBPoints() > this.victoryPoints){
             this.done = true;
+            this.computeStats();
         }
         this.saveBelote();
+        return roundsToUpdate;
+    }
+
+    /**
+     *
+     * @param winner is an integer that represents the winner of the round:
+     * <p>- Equip A: -1
+     * <p>- Equality: 0
+     * <p>- Equip B: 1
+     * @return the number of previous rounds that need to be updated because of dispute resolution.
+     */
+    private int resolvePreviousDisputes(int winner){
+        int roundUpdated = 0;
+        if(winner == 0){
+            return roundUpdated;
+        }
+        boolean winnerIsEquipA = (winner == 1);
+        int points = 0;
+        for(int i = this.getRoundsList().size() - 1; i >= 0; i--){
+            Round round = this.getRoundsList().get(i);
+            if(round.isInDispute()){
+                points += round.resolveDispute(winnerIsEquipA);
+                roundUpdated++;
+            }else{
+                break;
+            }
+        }
+        if(winnerIsEquipA){
+            this.equipAPoints += points;
+        }else {
+            this.equipBPoints += points;
+        }
+        return roundUpdated;
     }
 
     /**
@@ -153,6 +186,33 @@ public class Belote {
     }
 
     /**
+     * @param playerId of the player:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     * @return the player UUID of the teammate.
+     */
+    public UUID getTeammatePlayerUUID(int playerId){
+        return this.getPlayerFromId(this.getTeammatePlayerId(playerId)).getUuid();
+    }
+
+    /**
+     * @param playerId of the player:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     * @return the player id of the teammate.
+     */
+    public int getTeammatePlayerId(int playerId){
+        if(playerId == 1) return 3;
+        if(playerId == 2) return 4;
+        if(playerId == 3) return 1;
+        return 2;
+    }
+
+    /**
      * @return The date of creation of this belote game ins String format compact
      */
     public String getDateInShortString(){
@@ -172,7 +232,7 @@ public class Belote {
     public static void loadBelotesList(){
         ArrayList<String> filesToString = Utils.getAllJSONStringFromDirectory(Utils.getBelotesDirectory());
         for(String fileToString : filesToString){
-            loadBelote(fileToString);
+            loadBelote(fileToString);//TODO load data from previously DONE belotes.
         }
     }
 
@@ -188,8 +248,8 @@ public class Belote {
             loadedBelote = new Belote(
                     beloteJSON.getLong("date"),
                     Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerAEquipA"))),
-                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipA"))),
                     Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerAEquipB"))),
+                    Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipA"))),
                     Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipB"))),
                     beloteJSON.getInt("victoryPoints")
             );
@@ -206,9 +266,22 @@ public class Belote {
                 }
                 loadedBelote.roundsList.add(round);
             }
+            if(loadedBelote.isDone()){
+                loadedBelote.computeStats();
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Save the data from the different rounds in each player stats.
+     */
+    public void computeStats(){
+        this.playerAEquipA.addDataBelote(this, 1);
+        this.playerAEquipB.addDataBelote(this, 2);
+        this.playerBEquipA.addDataBelote(this, 3);
+        this.playerBEquipB.addDataBelote(this, 4);
     }
 
     /**

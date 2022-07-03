@@ -3,7 +3,7 @@
     <color name="red">#FFFF0000</color>
     <color name="teal_700">#FF610C04</color>
     <color name="black">#FF000000</color>
-    <color name="invertible">#FF000000</color>
+    <color name="invertible">#FFFFFFFF</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_grey">#FFDCDCDC</color>
     <color name="grey">#FF6F6F6F</color>

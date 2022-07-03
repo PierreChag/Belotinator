@@ -16,11 +16,34 @@ public class Round {
     private int startingPlayerId = 0, leaderPlayerId = 0;
     private int rawPointsA, rawPointsB, declarationPointsA, declarationPointsB, finalPointsA, finalPointsB;
     private final ArrayList<PlayerDeclaration> declarationList = new ArrayList<>();
+    private boolean isInDispute = false;
 
     /**
      * Creates a new instance of Round but all the basic parameters must be initialized manually (RoundType, StartingPlayer and LeaderPlayer).
      */
     public Round(){}
+
+    /**
+     * @return the id of the starting player:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     */
+    public int getStartingPlayerId(){
+        return this.startingPlayerId;
+    }
+
+    /**
+     * @return the id of the leader player:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     */
+    public int getLeaderPlayerId(){
+        return this.leaderPlayerId;
+    }
 
     /**
      * Initializes the basic parameter startingPlayerId.
@@ -46,7 +69,9 @@ public class Round {
         return belote.getPlayerFromId(this.leaderPlayerId).getName();
     }
 
-
+    /**
+     * @return true if the leader is  in equip A.
+     */
     public boolean leaderIsEquipA() {
         return Player.isEquipA(this.leaderPlayerId);
     }
@@ -90,8 +115,44 @@ public class Round {
         return equipA ? this.finalPointsA : this.finalPointsB;
     }
 
+    /**
+     * @return true if the round is still in dispute.
+     */
     public boolean isInDispute(){
-        return this.finalPointsA == this.finalPointsB;
+        return this.isInDispute;
+    }
+
+    /**
+     * Checks if the round is in dispute. If yes, set the leader final points to 0.
+     */
+    public void choseDisputeState() {
+        if(this.getWinner() == 0){
+            if(this.leaderIsEquipA()){
+                this.finalPointsA = 0;
+            }else{
+                this.finalPointsB = 0;
+            }
+            this.isInDispute = true;
+        }else this.isInDispute = false;
+    }
+
+    /**
+     * Resolves the dispute state of the round by adding the missing points to the winner of the next round.
+     * @param nextWinnerIsEquipA is true if the equip that won the next round is equip A.
+     * @return number of points added to the winner score.
+     */
+    public int resolveDispute(boolean nextWinnerIsEquipA){
+        int pointsToAdd = 0;
+        if(this.isInDispute){
+            pointsToAdd = Math.max(this.finalPointsA, this.finalPointsB);
+            if(nextWinnerIsEquipA){
+                this.finalPointsA += pointsToAdd;
+            }else{
+                this.finalPointsB += pointsToAdd;
+            }
+            this.isInDispute = false;
+        }
+        return pointsToAdd;
     }
 
     /**
@@ -197,6 +258,7 @@ public class Round {
         //The multiplier is only applied in the end
         this.finalPointsA *= this.type.getMultiplier();
         this.finalPointsB *= this.type.getMultiplier();
+        this.choseDisputeState();
     }
 
     /**
@@ -206,8 +268,36 @@ public class Round {
      * <p>- Equip B: 1
      */
     public int getWinner(){
-        if(this.finalPointsA == this.finalPointsB) return 0;
+        if(this.isInDispute) return 0;
         return this.finalPointsA > this.finalPointsB ? -1 : 1;
+    }
+
+    /**
+     * @param playerId:
+     * <p>- 1: playerA EquipA
+     * <p>- 2: playerA EquipB
+     * <p>- 3: playerB EquipA
+     * <p>- 4: playerB EquipB
+     * @return true if the player is in the team that won.
+     */
+    public boolean wonByPlayer(int playerId){
+        return Player.isEquipA(playerId) ? this.getWinner() == -1 : this.getWinner() == 1;
+    }
+
+    /**
+     * @return true if the round was won thanks to declaration points.
+     */
+    public boolean wonWithDeclarations(){
+        switch (this.getWinner()){
+            default:
+            case 0:
+                return false;
+            case -1:
+                return this.finalPointsA - this.type.getMultiplier() * (this.declarationPointsA - this.declarationPointsB) <= this.finalPointsB;
+            case 1:
+                return this.finalPointsB - this.type.getMultiplier() * (this.declarationPointsB - this.declarationPointsA) <= this.finalPointsB;
+        }
+
     }
 
     /**
@@ -232,6 +322,7 @@ public class Round {
             thisRoundJson.put("rawPointsB", this.rawPointsB);
             thisRoundJson.put("finalPointsA", this.finalPointsA);
             thisRoundJson.put("finalPointsB", this.finalPointsB);
+            thisRoundJson.put("isInDispute", this.isInDispute);
             JSONArray declarationArrayJson = new JSONArray();
             for (PlayerDeclaration playerDeclaration : this.declarationList){
                 JSONObject thisDeclarationJson = new JSONObject();
@@ -261,7 +352,7 @@ public class Round {
             loadedRound.rawPointsB = roundInJSON.getInt("rawPointsB");
             loadedRound.finalPointsA = roundInJSON.getInt("finalPointsA");
             loadedRound.finalPointsB = roundInJSON.getInt("finalPointsB");
-
+            loadedRound.isInDispute = roundInJSON.getBoolean("isInDispute");
             // looping through all rounds
             JSONArray declarationArrayJson = roundInJSON.getJSONArray("declarationsList");
             for(int i = 0; i < declarationArrayJson.length(); i++) {
@@ -284,6 +375,7 @@ public class Round {
         this.rawPointsB = 0;
         this.finalPointsA = 0;
         this.finalPointsB = 0;
+        this.isInDispute = false;
     }
 
     /**

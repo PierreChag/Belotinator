@@ -8,14 +8,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="20dp">
+        android:layout_marginTop="20dp"
+        android:background="@color/light_grey" >
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:paddingHorizontal="10dp"
             android:text="@string/player"
-            android:textAlignment="textStart"
+            android:gravity="center"
             android:textColor="@color/black"
             android:textSize="24sp" />
 
@@ -33,6 +34,7 @@
         android:layout_marginTop="10dp"
         android:numColumns="4"
         android:stretchMode="columnWidth"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:background="@color/white"/>
 
 </LinearLayout>

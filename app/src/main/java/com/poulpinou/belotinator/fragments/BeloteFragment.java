@@ -1,5 +1,6 @@
 package com.poulpinou.belotinator.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -45,6 +46,7 @@ import com.poulpinou.belotinator.core.Utils;
 import com.poulpinou.belotinator.fragments.adapters.AllDeclarationsAdapter;
 import com.poulpinou.belotinator.fragments.adapters.OneDeclarationAdapter;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class BeloteFragment extends Fragment implements AdapterView.OnItemSelectedListener {
@@ -59,6 +61,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private EditText editTextRawPointsA, editTextRawPointsB;
     private TextView textViewFinalPointsA, textViewFinalPointsB, textViewTotalPointsA, textViewTotalPointsB, textViewPointTips;
     private LinearLayout layoutBelote, layoutNewRound;
+    private final ArrayList<LayoutRoundSummary> listLayoutSummary = new ArrayList<>();
     private Spinner spinnerAA, spinnerBA, spinnerAB, spinnerBB;
 
     //Required empty public constructor
@@ -119,7 +122,9 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 activity.findViewById(R.id.belote_equip_score_layout).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.line).setVisibility(View.VISIBLE);
                 for(Round round : selectedBelote.getRoundsList()){
-                    layoutBelote.addView(this.createRoundSummary(activity, round), layoutBelote.getChildCount() - 1);
+                    LayoutRoundSummary summary = new LayoutRoundSummary(activity, round);
+                    this.layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
+                    this.listLayoutSummary.add(summary);
                 }
                 if(selectedBelote.isDone()){
                     this.layoutBelote.addView(this.createWinnerView(activity));
@@ -274,7 +279,11 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private void setupSaveRoundButton(@NonNull Activity activity, Button button) {
         button.setOnClickListener(v -> {
             if(this.newRound.canBeSaved()){
-                selectedBelote.addRound(this.newRound);
+                int roundUpdated = selectedBelote.addRound(this.newRound);
+                for(int i = 1; i <= roundUpdated; i++){
+                    int roundID = selectedBelote.getRoundsList().size() - i - 1;
+                    this.listLayoutSummary.get(roundID).updateTeamScore(selectedBelote.getRoundsList().get(roundID));
+                }
                 this.fadeRoundAndAddNextRound(activity);
                 this.updateDisplayedScores();
             }else{
@@ -575,7 +584,8 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                View summary = createRoundSummary(activity, newRound);
+                LayoutRoundSummary summary = new LayoutRoundSummary(activity, newRound);
+                listLayoutSummary.add(summary);
                 layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
 
                 Animation fadeIn = new AlphaAnimation(0, 1);
@@ -600,78 +610,6 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             public void onAnimationRepeat(Animation animation) {}
         });
         this.layoutNewRound.startAnimation(fadeOut);
-    }
-
-    /**
-     * Generates a view that sums up the information on the current newRound.
-     * @param activity used as Context.
-     * @return the generated view.
-     */
-    public View createRoundSummary(@NonNull Activity activity, Round round){
-        int tenDPinPX = Utils.getPixelFromDp(10);
-
-        LinearLayout layoutSummary = new LinearLayout(activity);
-        LinearLayout.LayoutParams paramS = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        paramS.setMargins(tenDPinPX, tenDPinPX, tenDPinPX, 0);
-        layoutSummary.setLayoutParams(paramS);
-        layoutSummary.setOrientation(LinearLayout.VERTICAL);
-        layoutSummary.setPadding(tenDPinPX, tenDPinPX, tenDPinPX, 0);
-        layoutSummary.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
-
-        LinearLayout layoutRoundTypeLeader = new LinearLayout(activity);
-        LinearLayout.LayoutParams paramRTL = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        layoutRoundTypeLeader.setLayoutParams(paramRTL);
-        layoutRoundTypeLeader.setOrientation(LinearLayout.HORIZONTAL);
-        layoutRoundTypeLeader.setBackgroundColor(activity.getResources().getColor(R.color.light_grey, null));
-        layoutSummary.addView(layoutRoundTypeLeader);
-
-        ImageView imageRoundType = new ImageView(activity);
-        imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Utils.getPixelFromDp(45), 1f));
-        imageRoundType.setAdjustViewBounds(true);
-        imageRoundType.setImageResource(round.getType().getIdRoundTypeImage());
-
-        TextView textLeader = new TextView(activity);
-        textLeader.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
-        textLeader.setText(round.getLeaderPlayerName(selectedBelote));
-        textLeader.setTextColor(activity.getResources().getColor(R.color.black, null));
-        textLeader.setGravity(Gravity.CENTER);
-        textLeader.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
-        if((round.leaderIsEquipA() && (round.getWinner() != -1)) || (!round.leaderIsEquipA() && (round.getWinner() != 1))){
-            textLeader.setPaintFlags(textLeader.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-        }
-        textLeader.setBackgroundColor(activity.getResources().getColor(round.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
-
-        if(round.leaderIsEquipA()){
-            layoutRoundTypeLeader.addView(textLeader);
-            layoutRoundTypeLeader.addView(imageRoundType);
-        }else{
-            layoutRoundTypeLeader.addView(imageRoundType);
-            layoutRoundTypeLeader.addView(textLeader);
-        }
-
-        LinearLayout layoutScore = new LinearLayout(activity);
-        layoutScore.setLayoutParams(paramRTL);
-        layoutScore.setOrientation(LinearLayout.HORIZONTAL);
-        layoutSummary.addView(layoutScore);
-
-        TextView textPointA = new TextView(activity);
-        LinearLayout.LayoutParams paramText = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
-        textPointA.setLayoutParams(paramText);
-        textPointA.setText(String.valueOf(round.getFinalPoints(true)));
-        textPointA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
-        textPointA.setGravity(Gravity.CENTER);
-        textPointA.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
-        layoutScore.addView(textPointA);
-
-        TextView textPointB = new TextView(activity);
-        textPointB.setLayoutParams(paramText);
-        textPointB.setText(String.valueOf(round.getFinalPoints(false)));
-        textPointB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
-        textPointB.setGravity(Gravity.CENTER);
-        textPointB.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
-        layoutScore.addView(textPointB);
-
-        return layoutSummary;
     }
 
     /**
@@ -725,5 +663,83 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     public void onDestroyView() {
         super.onDestroyView();
         selectedBelote = null;
+    }
+
+    @SuppressLint("ViewConstructor")
+    public static class LayoutRoundSummary extends LinearLayout {
+
+        private final TextView textPointA;
+        private final TextView textPointB;
+
+        public LayoutRoundSummary(Context context, Round round) {
+            super(context);
+
+            int tenDPinPX = Utils.getPixelFromDp(10);
+
+            LinearLayout.LayoutParams paramS = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            paramS.setMargins(tenDPinPX, tenDPinPX, tenDPinPX, 0);
+            this.setLayoutParams(paramS);
+            this.setOrientation(LinearLayout.VERTICAL);
+            this.setPadding(tenDPinPX, tenDPinPX, tenDPinPX, 0);
+            this.setBackgroundColor(context.getResources().getColor(R.color.dark_grey, null));
+
+            LinearLayout layoutRoundTypeLeader = new LinearLayout(context);
+            LinearLayout.LayoutParams paramRTL = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            layoutRoundTypeLeader.setLayoutParams(paramRTL);
+            layoutRoundTypeLeader.setOrientation(LinearLayout.HORIZONTAL);
+            layoutRoundTypeLeader.setBackgroundColor(context.getResources().getColor(R.color.light_grey, null));
+            this.addView(layoutRoundTypeLeader);
+
+            ImageView imageRoundType = new ImageView(context);
+            imageRoundType.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Utils.getPixelFromDp(45), 1f));
+            imageRoundType.setAdjustViewBounds(true);
+            imageRoundType.setImageResource(round.getType().getIdRoundTypeImage());
+
+            TextView textLeader = new TextView(context);
+            textLeader.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+            textLeader.setText(round.getLeaderPlayerName(selectedBelote));
+            textLeader.setTextColor(context.getResources().getColor(R.color.black, null));
+            textLeader.setGravity(Gravity.CENTER);
+            textLeader.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
+            if((round.leaderIsEquipA() && (round.getWinner() != -1)) || (!round.leaderIsEquipA() && (round.getWinner() != 1))){
+                textLeader.setPaintFlags(textLeader.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            }
+            textLeader.setBackgroundColor(context.getResources().getColor(round.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
+
+            if(round.leaderIsEquipA()){
+                layoutRoundTypeLeader.addView(textLeader);
+                layoutRoundTypeLeader.addView(imageRoundType);
+            }else{
+                layoutRoundTypeLeader.addView(imageRoundType);
+                layoutRoundTypeLeader.addView(textLeader);
+            }
+
+            LinearLayout layoutScore = new LinearLayout(context);
+            layoutScore.setLayoutParams(paramRTL);
+            layoutScore.setOrientation(LinearLayout.HORIZONTAL);
+            this.addView(layoutScore);
+
+            this.textPointA = new TextView(context);
+            LinearLayout.LayoutParams paramText = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+            this.textPointA.setLayoutParams(paramText);
+            this.textPointA.setText(String.valueOf(round.getFinalPoints(true)));
+            this.textPointA.setTextColor(context.getResources().getColor(R.color.equip_A, null));
+            this.textPointA.setGravity(Gravity.CENTER);
+            this.textPointA.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
+            layoutScore.addView(textPointA);
+
+            this.textPointB = new TextView(context);
+            this.textPointB.setLayoutParams(paramText);
+            this.textPointB.setText(String.valueOf(round.getFinalPoints(false)));
+            this.textPointB.setTextColor(context.getResources().getColor(R.color.equip_B, null));
+            this.textPointB.setGravity(Gravity.CENTER);
+            this.textPointB.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
+            layoutScore.addView(this.textPointB);
+        }
+
+        public void updateTeamScore(Round round){
+            this.textPointA.setText(String.valueOf(round.getFinalPoints(true)));
+            this.textPointB.setText(String.valueOf(round.getFinalPoints(false)));
+        }
     }
 }
