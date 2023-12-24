@@ -1,7 +1,6 @@
 package com.poulpinou.belotinator.core;
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,7 +12,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +23,7 @@ public class Player {
     private final UUID uuid;
     private final String name;
     private final int[] dataColor = new int[7], dataWithoutTrump = new int[7], dataAllTrump = new int[7], colorWinRates = new int[8];
-    private final Map<UUID, int[]> dataPlayer = new HashMap<>();
+    private final Map<UUID, StatsWithPlayer> statsWithPlayerMap = new HashMap<>();
     private int playedGames, wonGames, roundWonLeadFirst, roundTakenLeadFirst, roundWonLeadNotFirst, roundTakenLeadNotFirst, totalDeclarationPoint, squaredJack, roundSavedDeclaration;
 
     public Player (UUID uuid, String name){
@@ -45,13 +43,13 @@ public class Player {
 
     /**
      * @param playerId:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
-     * @return true if the player is in EquipA, else otherwise.
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
+     * @return true if the player is in TeamA, else otherwise.
      */
-    public static boolean isEquipA(int playerId){
+    public static boolean isTeamA(int playerId){
         return playerId == 1 || playerId == 3;
     }
 
@@ -79,38 +77,40 @@ public class Player {
      * Loops in the round of the belote and add all the information to player's data.
      * @param belote game to be added to the stats
      * @param playerId of the player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      */
     public void addDataBelote(Belote belote, int playerId){
         this.playedGames++;
-        //We check there is stats for the relationship with the 3 other players in the map.
+        //We check if there is stats for the relationship with the 3 other players in the map.
         for(int i = 1; i <= 4; i++){
+            // We check so that we don't add this player to his own stats.
             if(i != playerId){
-                UUID uuid = belote.getPlayerFromId(1).getUuid();
-                if(!this.dataPlayer.containsKey(uuid)){
+                UUID uuid = belote.getPlayerFromId(i).getUuid();
+                if(!this.statsWithPlayerMap.containsKey(uuid)){
                     // The int array stored in dataPlayer contains:
-                    // [Nb_of_games_played_with, Nb_of_games_won_with, Nb_of_games_first_when_lead, Nb_of_games_first_when_lead_lost, Nb_of_round_stolen_with_declaration]
-                    this.dataPlayer.put(uuid, new int[5]);
+                    this.statsWithPlayerMap.put(uuid, new StatsWithPlayer());
                 }
             }
         }
-        int[] arrayTeammate = Objects.requireNonNull(this.dataPlayer.get(belote.getTeammatePlayerUUID(playerId)));
-        arrayTeammate[0]++;
-        boolean playerIsEquipA = playerId == 1 || playerId == 3;
-        if((belote.getWinner() == -1 && playerIsEquipA) || (belote.getWinner() == -1 && !playerIsEquipA)){
+        StatsWithPlayer statsWithTeammate = Objects.requireNonNull(this.statsWithPlayerMap.get(belote.getTeammatePlayerUUID(playerId)));
+        statsWithTeammate.numberOfBelotesInMyTeam++;
+        boolean playerIsTeamA = playerId == 1 || playerId == 3;
+        if((belote.getBeloteResult() == Utils.Result.TEAM_A_WON && playerIsTeamA) || (belote.getBeloteResult() == Utils.Result.TEAM_B_WON && !playerIsTeamA)){
             this.wonGames++;
-            arrayTeammate[1]++;
+            statsWithTeammate.numberOfBelotesWonInMyTeam++;
         }
         for(Round round : belote.getRoundsList()){
             this.addDataRound(round, playerId);
             if(round.getLeaderPlayerId() == playerId){
-                int[] arrayFirst = Objects.requireNonNull(this.dataPlayer.get(belote.getPlayerFromId(round.getStartingPlayerId()).getUuid()));
-                arrayFirst[2]++;
-                if(!round.wonByPlayer(playerId)){
-                    arrayFirst[3]++;
+                if(round.getStartingPlayerId() != playerId){
+                    StatsWithPlayer statsWithStartingPlayer = Objects.requireNonNull(this.statsWithPlayerMap.get(belote.getPlayerFromId(round.getStartingPlayerId()).getUuid()));
+                    statsWithStartingPlayer.numberOfRoundsStartedWhenImLeader++;
+                    if(!round.wonByPlayer(playerId)){
+                        statsWithStartingPlayer.numberOfRoundsStartedAndLostWhenImLeader++;
+                    }
                 }
             }
             for(Round.PlayerDeclaration declaration : round.getDeclarationList()){
@@ -123,7 +123,7 @@ public class Player {
             }
             if(round.wonWithDeclarations()){
                 if(round.wonByPlayer(playerId)){
-                    //if(playerId == round.getPlayerMostDeclarationPoints(playerIsEquipA)){
+                    //if(playerId == round.getPlayerMostDeclarationPoints(playerIsTeamA)){
                     //    this.roundSavedDeclaration++;
                     //}
                 }else{
@@ -144,20 +144,20 @@ public class Player {
      * <p>- 6: Average point as leader
      * @param round to be added
      * @param playerID of the player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      */
     private void addDataRound(Round round, int playerID){
-        boolean playerIsEquipA = playerID == 1 || playerID == 3;
-        boolean playerWonRound = (round.getWinner() == -1 && playerIsEquipA) || (round.getWinner() == -1 && !playerIsEquipA);
+        boolean playerIsTeamA = playerID == 1 || playerID == 3;
+        boolean playerWonRound = (round.getWinner() == Utils.Result.TEAM_A_WON && playerIsTeamA) || (round.getWinner() == Utils.Result.TEAM_B_WON && !playerIsTeamA);
         int[] dataArray = this.getDataArrayFromRound(round);
         if(round.getLeaderPlayerId() == playerID){
             dataArray[0]++;
             if(playerWonRound) dataArray[1]++;
             dataArray[6] += round.getFinalPoints(true);
-        }else if(round.leaderIsEquipA() != playerIsEquipA){
+        }else if(round.leaderIsTeamA() != playerIsTeamA){
             dataArray[4]++;
             if(playerWonRound) dataArray[5]++;
         }else{
@@ -273,5 +273,16 @@ public class Player {
         }
         //TODO Handle the deletion of a player !!
         return PLAYERS_LIST.get(0);
+    }
+
+    public static class StatsWithPlayer {
+        public int numberOfBelotesInMyTeam;
+        public int numberOfBelotesWonInMyTeam;
+        public int numberOfRoundsStartedWhenImLeader;
+        public int numberOfRoundsStartedAndLostWhenImLeader;
+        public int numberOfRoundsStolenFromMeWithDeclaration;
+        private StatsWithPlayer(){
+
+        }
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.poulpinou.belotinator.R;
+import com.poulpinou.belotinator.core.Utils.Result;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,27 +25,27 @@ public class Belote {
         loadBelotesList();
     }
     private final long dateInMillis;
-    private final Player playerAEquipA, playerBEquipA, playerAEquipB, playerBEquipB;
+    private final Player playerATeamA, playerBTeamA, playerATeamB, playerBTeamB;
     private final int victoryPoints;
-    private boolean done = false;
-    private int equipAPoints, equipBPoints;
+    private Result beloteResult = Result.IN_PROGRESS;
+    private int teamAPoints, teamBPoints;
     private final ArrayList<Round> roundsList = new ArrayList<>();
 
     /**
      * Creates a Belote instance.
      * @param dateInMillis When the belote game happened in milliseconds
-     * @param playerAEquipA Player A in equip A (id: 1)
-     * @param playerAEquipB Player A in equip B (id: 2)
-     * @param playerBEquipA Player B in equip A (id: 3)
-     * @param playerBEquipB Player B in equip B (id: 4)
+     * @param playerATeamA Player A in team A (id: 1)
+     * @param playerATeamB Player A in team B (id: 2)
+     * @param playerBTeamA Player B in team A (id: 3)
+     * @param playerBTeamB Player B in team B (id: 4)
      * @param victoryPoints Points required to win the game
      */
-    public Belote(long dateInMillis, Player playerAEquipA, Player playerAEquipB, Player playerBEquipA, Player playerBEquipB, int victoryPoints){
+    public Belote(long dateInMillis, Player playerATeamA, Player playerATeamB, Player playerBTeamA, Player playerBTeamB, int victoryPoints){
         this.dateInMillis = dateInMillis;
-        this.playerAEquipA = playerAEquipA;
-        this.playerAEquipB = playerAEquipB;
-        this.playerBEquipA = playerBEquipA;
-        this.playerBEquipB = playerBEquipB;
+        this.playerATeamA = playerATeamA;
+        this.playerATeamB = playerATeamB;
+        this.playerBTeamA = playerBTeamA;
+        this.playerBTeamB = playerBTeamB;
         this.victoryPoints = victoryPoints;
         BELOTES_LIST.add(this);
     }
@@ -56,15 +57,15 @@ public class Belote {
      */
     public int addRound(Round newRound){
         this.roundsList.add(newRound);
-        this.equipAPoints += newRound.getFinalPoints(true);
-        this.equipBPoints += newRound.getFinalPoints(false);
+        this.teamAPoints += newRound.getFinalPoints(true);
+        this.teamBPoints += newRound.getFinalPoints(false);
         int roundsToUpdate = this.resolvePreviousDisputes(newRound.getWinner());
-        if(this.getEquipAPoints() > this.getEquipBPoints() && this.getEquipAPoints() > this.victoryPoints){
-            this.done = true;
+        if(this.getTeamAPoints() > this.getTeamBPoints() && this.getTeamAPoints() >= this.victoryPoints){
+            this.beloteResult = Result.TEAM_A_WON;
             this.computeStats();
         }
-        if(this.getEquipBPoints() > this.getEquipAPoints() && this.getEquipBPoints() > this.victoryPoints){
-            this.done = true;
+        if(this.getTeamBPoints() > this.getTeamAPoints() && this.getTeamBPoints() >= this.victoryPoints){
+            this.beloteResult = Result.TEAM_B_WON;
             this.computeStats();
         }
         this.saveBelote();
@@ -73,32 +74,29 @@ public class Belote {
 
     /**
      *
-     * @param winner is an integer that represents the winner of the round:
-     * <p>- Equip A: -1
-     * <p>- Equality: 0
-     * <p>- Equip B: 1
-     * @return the number of previous rounds that need to be updated because of dispute resolution.
+     * @param roundResult is the result of the Round.
+     * @return the number of previous Rounds that need to be updated because of dispute resolution.
      */
-    private int resolvePreviousDisputes(int winner){
-        int roundUpdated = 0;
-        if(winner == 0){
-            return roundUpdated;
+    private int resolvePreviousDisputes(Result roundResult){
+        if(!roundResult.isFinished()){
+            return 0;
         }
-        boolean winnerIsEquipA = (winner == 1);
+        boolean winnerIsTeamA = (roundResult == Result.TEAM_A_WON);
+        int roundUpdated = 0;
         int points = 0;
         for(int i = this.getRoundsList().size() - 1; i >= 0; i--){
             Round round = this.getRoundsList().get(i);
             if(round.isInDispute()){
-                points += round.resolveDispute(winnerIsEquipA);
+                points += round.resolveDispute(winnerIsTeamA);
                 roundUpdated++;
             }else{
                 break;
             }
         }
-        if(winnerIsEquipA){
-            this.equipAPoints += points;
+        if(winnerIsTeamA){
+            this.teamAPoints += points;
         }else {
-            this.equipBPoints += points;
+            this.teamBPoints += points;
         }
         return roundUpdated;
     }
@@ -111,86 +109,80 @@ public class Belote {
     }
 
     /**
-     * @return the current total points of Equip A
+     * @return the current total points of Team A
      */
-    public int getEquipAPoints(){
-        return this.equipAPoints;
+    public int getTeamAPoints(){
+        return this.teamAPoints;
     }
 
     /**
-     * @return the current total points of Equip B
+     * @return the current total points of Team B
      */
-    public int getEquipBPoints(){
-        return this.equipBPoints;
+    public int getTeamBPoints(){
+        return this.teamBPoints;
     }
 
     /**
-     * @return True if the belote game is done.
+     * @return True if the Belote game is finished, false otherwise.
      */
-    public boolean isDone(){
-        return this.done;
+    public boolean isFinished(){
+        return this.beloteResult.isFinished();
     }
 
     /**
-     * @return an integer corresponding to the winner.
-     * <p>- Not enough points or equality : 0
-     * <p>- Equip A: -1
-     * <p>- Equip B: 1
+     * @return the current Result of this Belote.
      */
-    public int getWinner(){
-        if(!this.done){
-            return 0;
-        }
-        return (this.getEquipAPoints() > this.getEquipBPoints()) ? -1 : 1;
+    public Utils.Result getBeloteResult(){
+        return this.beloteResult;
     }
 
     /**
      * @param context used to get "no player selected" string.
      * @return An ArrayList starting with the "no player selected" string, then the list of 4 player names in the following order:
      * - 0: ?
-     * - 1: playerA EquipA
-     * - 2: playerA EquipB
-     * - 3: playerB EquipA
-     * - 4: playerB EquipB
+     * - 1: playerA TeamA
+     * - 2: playerA TeamB
+     * - 3: playerB TeamA
+     * - 4: playerB TeamB
      */
     public ArrayList<String> getStringPlayerList(@NonNull Context context){
         ArrayList<String> list = new ArrayList<>();
         list.add(context.getString(R.string.empty));
-        list.add(this.playerAEquipA.getName());
-        list.add(this.playerAEquipB.getName());
-        list.add(this.playerBEquipA.getName());
-        list.add(this.playerBEquipB.getName());
+        list.add(this.playerATeamA.getName());
+        list.add(this.playerATeamB.getName());
+        list.add(this.playerBTeamA.getName());
+        list.add(this.playerBTeamB.getName());
         return list;
     }
 
     /**
      * @param id of the player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      * @return the instance of the corresponding player.
      */
     public Player getPlayerFromId(int id){
         switch (id){
             default:
             case 1:
-                return this.playerAEquipA;
+                return this.playerATeamA;
             case 2:
-                return this.playerAEquipB;
+                return this.playerATeamB;
             case 3:
-                return this.playerBEquipA;
+                return this.playerBTeamA;
             case 4:
-                return this.playerBEquipB;
+                return this.playerBTeamB;
         }
     }
 
     /**
      * @param playerId of the player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      * @return the player UUID of the teammate.
      */
     public UUID getTeammatePlayerUUID(int playerId){
@@ -199,10 +191,10 @@ public class Belote {
 
     /**
      * @param playerId of the player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      * @return the player id of the teammate.
      */
     public int getTeammatePlayerId(int playerId){
@@ -210,6 +202,18 @@ public class Belote {
         if(playerId == 2) return 4;
         if(playerId == 3) return 1;
         return 2;
+    }
+
+    /**
+     * @param playerId of the current round starting player:
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
+     * @return the player id of the starting player for the next round.
+     */
+    public int getNextStartingPlayer(int playerId){
+        return playerId == 4 ? 1 : playerId + 1;
     }
 
     /**
@@ -253,9 +257,22 @@ public class Belote {
                     Player.getPlayerFromUUID(UUID.fromString(beloteJSON.getString("playerBEquipB"))),
                     beloteJSON.getInt("victoryPoints")
             );
-            loadedBelote.done = beloteJSON.getBoolean("done");
-            loadedBelote.equipAPoints = beloteJSON.getInt("equipAPoints");
-            loadedBelote.equipBPoints = beloteJSON.getInt("equipBPoints");
+            loadedBelote.teamAPoints = beloteJSON.getInt("equipAPoints");
+            loadedBelote.teamBPoints = beloteJSON.getInt("equipBPoints");
+
+            //TODO Compatibility code for previous versions.
+            if(beloteJSON.has("done")){
+                if(beloteJSON.getBoolean("done")){
+                    loadedBelote.beloteResult = loadedBelote.teamAPoints > loadedBelote.teamBPoints ? Result.TEAM_A_WON : Result.TEAM_B_WON;
+                }else{
+                    loadedBelote.beloteResult = loadedBelote.teamAPoints > loadedBelote.victoryPoints ? Result.EQUALITY : Result.IN_PROGRESS;
+                }
+                beloteJSON.remove("done");
+                beloteJSON.put("result", loadedBelote.beloteResult.getName());
+                // Saves the modification
+                Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), loadedBelote.getFileName(), beloteJSON.toString());
+            }
+            loadedBelote.beloteResult = Result.fromId(beloteJSON.getString("result"));
 
             // looping through all rounds
             JSONArray roundsArrayJson = beloteJSON.getJSONArray("roundsList");
@@ -266,7 +283,7 @@ public class Belote {
                 }
                 loadedBelote.roundsList.add(round);
             }
-            if(loadedBelote.isDone()){
+            if(loadedBelote.isFinished()){
                 loadedBelote.computeStats();
             }
         } catch (JSONException e) {
@@ -278,10 +295,10 @@ public class Belote {
      * Save the data from the different rounds in each player stats.
      */
     public void computeStats(){
-        this.playerAEquipA.addDataBelote(this, 1);
-        this.playerAEquipB.addDataBelote(this, 2);
-        this.playerBEquipA.addDataBelote(this, 3);
-        this.playerBEquipB.addDataBelote(this, 4);
+        this.playerATeamA.addDataBelote(this, 1);
+        this.playerATeamB.addDataBelote(this, 2);
+        this.playerBTeamA.addDataBelote(this, 3);
+        this.playerBTeamB.addDataBelote(this, 4);
     }
 
     /**
@@ -293,14 +310,14 @@ public class Belote {
         JSONObject thisBeloteJson = new JSONObject();
         try {
             thisBeloteJson.put("date", this.dateInMillis);
-            thisBeloteJson.put("playerAEquipA", this.playerAEquipA.getUuid().toString());
-            thisBeloteJson.put("playerBEquipA", this.playerBEquipA.getUuid().toString());
-            thisBeloteJson.put("playerAEquipB", this.playerAEquipB.getUuid().toString());
-            thisBeloteJson.put("playerBEquipB", this.playerBEquipB.getUuid().toString());
+            thisBeloteJson.put("playerAEquipA", this.playerATeamA.getUuid().toString());
+            thisBeloteJson.put("playerBEquipA", this.playerBTeamA.getUuid().toString());
+            thisBeloteJson.put("playerAEquipB", this.playerATeamB.getUuid().toString());
+            thisBeloteJson.put("playerBEquipB", this.playerBTeamB.getUuid().toString());
             thisBeloteJson.put("victoryPoints", this.victoryPoints);
-            thisBeloteJson.put("done", this.done);
-            thisBeloteJson.put("equipAPoints", this.equipAPoints);
-            thisBeloteJson.put("equipBPoints", this.equipBPoints);
+            thisBeloteJson.put("result", this.beloteResult.getName());
+            thisBeloteJson.put("equipAPoints", this.teamAPoints);
+            thisBeloteJson.put("equipBPoints", this.teamBPoints);
             JSONArray roundsArrayJson = new JSONArray();
             for (Round round : this.roundsList){
                 roundsArrayJson.put(round.getJson());

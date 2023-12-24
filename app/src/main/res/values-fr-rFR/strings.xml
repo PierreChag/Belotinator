@@ -22,9 +22,9 @@
     <string name="historic_fragment_label">Historique des parties</string>
     <string name="belote_fragment_label">Belote</string>
     <string name="empty">\?</string>
-    <string name="equip_a">Équipe A</string>
-    <string name="equip_b">Équipe B</string>
-    <string name="equip_label">%1$s &amp; %2$s</string>
+    <string name="team_a">Équipe A</string>
+    <string name="team_b">Équipe B</string>
+    <string name="team_label">%1$s &amp; %2$s</string>
     <string name="new_round">Nouvelle manche</string>
     <string name="club_trump">Atout trèfle</string>
     <string name="diamond_trump">Atout carreau</string>

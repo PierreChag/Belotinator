@@ -21,9 +21,9 @@
     <string name="historic_fragment_label">Games histories</string>
     <string name="belote_fragment_label">Belote</string>
     <string name="empty">\?</string>
-    <string name="equip_a">Equip A</string>
-    <string name="equip_b">Equip B</string>
-    <string name="equip_label">%1$s &amp; %2$s</string>
+    <string name="team_a">Team A</string>
+    <string name="team_b">Team B</string>
+    <string name="team_label">%1$s &amp; %2$s</string>
     <string name="new_round">New round</string>
     <string name="club_trump">Club trump</string>
     <string name="diamond_trump">Diamond trump</string>

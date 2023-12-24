@@ -12,7 +12,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -101,25 +100,25 @@ public class HistoricFragment extends Fragment {
         layoutPlayers.setGravity(Gravity.CENTER);
         mainLayout.addView(layoutPlayers);
 
-        //Equip A name
+        //Team A name
         TextView textLeaderA = new TextView(activity);
         textLeaderA.setLayoutParams(paramA);
-        textLeaderA.setText(this.getString(R.string.equip_label, belote.getPlayerFromId(1).getName(), belote.getPlayerFromId(3).getName()));
+        textLeaderA.setText(this.getString(R.string.team_label, belote.getPlayerFromId(1).getName(), belote.getPlayerFromId(3).getName()));
         textLeaderA.setGravity(Gravity.CENTER);
         textLeaderA.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
         textLeaderA.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
-        textLeaderA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+        textLeaderA.setTextColor(activity.getResources().getColor(R.color.team_A, null));
         textLeaderA.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
         layoutPlayers.addView(textLeaderA);
 
-        //Equip B name
+        //Team B name
         TextView textLeaderB = new TextView(activity);
         textLeaderB.setLayoutParams(paramB);
-        textLeaderB.setText(this.getString(R.string.equip_label, belote.getPlayerFromId(2).getName(), belote.getPlayerFromId(4).getName()));
+        textLeaderB.setText(this.getString(R.string.team_label, belote.getPlayerFromId(2).getName(), belote.getPlayerFromId(4).getName()));
         textLeaderB.setGravity(Gravity.CENTER);
         textLeaderB.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
         textLeaderB.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
-        textLeaderB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+        textLeaderB.setTextColor(activity.getResources().getColor(R.color.team_B, null));
         textLeaderB.setBackgroundColor(activity.getResources().getColor(R.color.dark_grey, null));
         layoutPlayers.addView(textLeaderB);
 
@@ -130,40 +129,40 @@ public class HistoricFragment extends Fragment {
         layoutScores.setGravity(Gravity.CENTER);
         mainLayout.addView(layoutScores);
 
-        //Equip A score
+        //Team A score
         TextView textScoreA = new TextView(activity);
         textScoreA.setLayoutParams(paramA);
-        textScoreA.setText(String.valueOf(belote.getEquipAPoints()));
+        textScoreA.setText(String.valueOf(belote.getTeamAPoints()));
         textScoreA.setGravity(Gravity.CENTER);
         textScoreA.setTextSize(TypedValue.COMPLEX_UNIT_SP,30);
         textLeaderB.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         layoutScores.addView(textScoreA);
 
-        //Equip B score
+        //Team B score
         TextView textScoreB = new TextView(activity);
         textScoreB.setLayoutParams(paramB);
-        textScoreB.setText(String.valueOf(belote.getEquipBPoints()));
+        textScoreB.setText(String.valueOf(belote.getTeamBPoints()));
         textScoreB.setGravity(Gravity.CENTER);
         textScoreB.setTextSize(TypedValue.COMPLEX_UNIT_SP,30);
         textLeaderB.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         layoutScores.addView(textScoreB);
 
-        if(belote.isDone()){
-            if(belote.getWinner() == -1){
+        if(belote.isFinished()){
+            if(belote.getBeloteResult() == Utils.Result.TEAM_A_WON){
                 textScoreA.setTextColor(activity.getResources().getColor(R.color.black, null));
-                textScoreA.setBackgroundColor(activity.getResources().getColor(R.color.equip_A, null));
-                textScoreB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+                textScoreA.setBackgroundColor(activity.getResources().getColor(R.color.team_A, null));
+                textScoreB.setTextColor(activity.getResources().getColor(R.color.team_B, null));
                 textScoreB.setBackgroundColor(activity.getResources().getColor(R.color.white, null));
             }else{
-                textScoreA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+                textScoreA.setTextColor(activity.getResources().getColor(R.color.team_A, null));
                 textScoreA.setBackgroundColor(activity.getResources().getColor(R.color.white, null));
                 textScoreB.setTextColor(activity.getResources().getColor(R.color.black, null));
-                textScoreB.setBackgroundColor(activity.getResources().getColor(R.color.equip_B, null));
+                textScoreB.setBackgroundColor(activity.getResources().getColor(R.color.team_B, null));
             }
         }else{
-            textScoreA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+            textScoreA.setTextColor(activity.getResources().getColor(R.color.team_A, null));
             textScoreA.setBackgroundColor(activity.getResources().getColor(R.color.white, null));
-            textScoreB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+            textScoreB.setTextColor(activity.getResources().getColor(R.color.team_B, null));
             textScoreB.setBackgroundColor(activity.getResources().getColor(R.color.white, null));
         }
 

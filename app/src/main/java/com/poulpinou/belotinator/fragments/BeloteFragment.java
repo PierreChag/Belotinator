@@ -84,16 +84,16 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         Activity activity = this.getActivity();
         if (activity != null){
             //Put components into variables
-            this.spinnerAA = activity.findViewById(R.id.spinner_playerA_equipA);
-            this.spinnerBA = activity.findViewById(R.id.spinner_playerB_equipA);
-            this.spinnerAB = activity.findViewById(R.id.spinner_playerA_equipB);
-            this.spinnerBB = activity.findViewById(R.id.spinner_playerB_equipB);
+            this.spinnerAA = activity.findViewById(R.id.spinner_playerA_teamA);
+            this.spinnerBA = activity.findViewById(R.id.spinner_playerB_teamA);
+            this.spinnerAB = activity.findViewById(R.id.spinner_playerA_teamB);
+            this.spinnerBB = activity.findViewById(R.id.spinner_playerB_teamB);
             this.editTextRawPointsA = activity.findViewById(R.id.raw_points_A);
             this.editTextRawPointsB = activity.findViewById(R.id.raw_points_B);
             this.textViewFinalPointsA = activity.findViewById(R.id.final_points_A);
             this.textViewFinalPointsB = activity.findViewById(R.id.final_points_B);
-            this.textViewTotalPointsA = activity.findViewById(R.id.equipA_points);
-            this.textViewTotalPointsB = activity.findViewById(R.id.equipB_points);
+            this.textViewTotalPointsA = activity.findViewById(R.id.teamA_points);
+            this.textViewTotalPointsB = activity.findViewById(R.id.teamB_points);
             this.textViewPointTips = activity.findViewById(R.id.text_points_tips);
             this.layoutBelote = activity.findViewById(R.id.belote_layout);
             this.layoutNewRound = activity.findViewById(R.id.belote_new_round);
@@ -114,19 +114,19 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
             //If the fragment is created from a saved Belote:
             if(selectedBelote != null){
-                this.setupEquipLabel(activity);
+                this.setupTeamLabel(activity);
                 this.updateDisplayedScores();
                 this.setupNewRoundLayout(activity);
-                activity.findViewById(R.id.belote_equip_maker_layout).setVisibility(View.GONE);
-                activity.findViewById(R.id.belote_equip_summary_layout).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.belote_equip_score_layout).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.belote_team_maker_layout).setVisibility(View.GONE);
+                activity.findViewById(R.id.belote_team_summary_layout).setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.belote_team_score_layout).setVisibility(View.VISIBLE);
                 activity.findViewById(R.id.line).setVisibility(View.VISIBLE);
                 for(Round round : selectedBelote.getRoundsList()){
                     LayoutRoundSummary summary = new LayoutRoundSummary(activity, round);
                     this.layoutBelote.addView(summary, layoutBelote.getChildCount() - 1);
                     this.listLayoutSummary.add(summary);
                 }
-                if(selectedBelote.isDone()){
+                if(selectedBelote.isFinished()){
                     this.layoutBelote.addView(this.createWinnerView(activity));
                 }else {
                     this.layoutNewRound.setVisibility(View.VISIBLE);
@@ -233,12 +233,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                         ImageView iv = getDeclarationImageView(activity, newDeclaration);
                         iv.setId(newRound.addDeclaration(spinnerPlayer.getSelectedItemPosition(), newDeclaration));
                         this.updateFinalPointsNewRound(activity);
-                        if(Player.isEquipA(spinnerPlayer.getSelectedItemPosition())){
+                        if(Player.isTeamA(spinnerPlayer.getSelectedItemPosition())){
                             LinearLayout layoutA = getActivity().findViewById(R.id.layout_declarations_a);
-                            iv.setBackgroundColor(activity.getResources().getColor(R.color.equip_A, null));
+                            iv.setBackgroundColor(activity.getResources().getColor(R.color.team_A, null));
                             layoutA.addView(iv, layoutA.indexOfChild(layoutB));
                         }else{
-                            iv.setBackgroundColor(activity.getResources().getColor(R.color.equip_B, null));
+                            iv.setBackgroundColor(activity.getResources().getColor(R.color.team_B, null));
                             layoutB.addView(iv);
                         }
                         newDeclaration = null;
@@ -292,12 +292,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         });
     }
 
-    private void setupEquipLabel(@NonNull Activity activity) {
+    private void setupTeamLabel(@NonNull Activity activity) {
         if(selectedBelote != null){
-            TextView equipATextView = activity.findViewById(R.id.equipA_label);
-            equipATextView.setText(this.getString(R.string.equip_label, selectedBelote.getPlayerFromId(1).getName(), selectedBelote.getPlayerFromId(3).getName()));
-            TextView equipBTextView = activity.findViewById(R.id.equipB_label);
-            equipBTextView.setText(this.getString(R.string.equip_label, selectedBelote.getPlayerFromId(2).getName(), selectedBelote.getPlayerFromId(4).getName()));
+            TextView teamATextView = activity.findViewById(R.id.teamA_label);
+            teamATextView.setText(this.getString(R.string.team_label, selectedBelote.getPlayerFromId(1).getName(), selectedBelote.getPlayerFromId(3).getName()));
+            TextView teamBTextView = activity.findViewById(R.id.teamB_label);
+            teamBTextView.setText(this.getString(R.string.team_label, selectedBelote.getPlayerFromId(2).getName(), selectedBelote.getPlayerFromId(4).getName()));
         }
     }
 
@@ -305,21 +305,22 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * Clears all the currently selected value in the new round layout based on the current values in newRound.
      * Thus, newRound must not be reset before calling this method.
      * @param activity the context.
+     * @param nextFirstPlayer Id of the most probable first Player.
      */
-    private void clearNewRoundLayout(@NonNull Activity activity) {
+    private void clearNewRoundLayout(@NonNull Activity activity, int nextFirstPlayer) {
         Spinner spinnerLeader = activity.findViewById(R.id.spinner_new_leader);
         spinnerLeader.setSelection(0);
         ImageButton buttonType = activity.findViewById(this.getButtonRoundTypeId(this.newRound.getType()));
         buttonType.setImageResource(newRound.getType().getIdRoundTypeImageUnselected());
         Spinner spinnerFirst = activity.findViewById(R.id.spinner_new_first);
-        spinnerFirst.setSelection(0);
+        spinnerFirst.setSelection(nextFirstPlayer);
         for(int index = 0; index < this.newRound.getDeclarationList().size(); index++){
             View declarationView = activity.findViewById(this.newRound.getDeclarationViewId(index));
             ((ViewGroup) declarationView.getParent()).removeView(declarationView);
         }
     }
 
-    private void setupRawPointsEditText(EditText editText, EditText otherEquipEditText, boolean equipA) {
+    private void setupRawPointsEditText(EditText editText, EditText otherTeamEditText, boolean teamA) {
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -342,9 +343,9 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                     s.clear();
                     s.append(String.valueOf(points));
                 }
-                if(newRound.getRawPoints(equipA) != points && getActivity() != null){
-                    newRound.setPointsEquip(equipA, points);
-                    otherEquipEditText.setText(String.valueOf(newRound.getRawPoints(!equipA)));
+                if((newRound.getRawPoints(teamA) != points) && getActivity() != null){
+                    newRound.setPointsTeam(teamA, points);
+                    otherTeamEditText.setText(String.valueOf(newRound.getRawPoints(!teamA)));
                     updateFinalPointsNewRound(getActivity());
                 }
             }
@@ -401,10 +402,10 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 this.newRound.setStartingPlayer(pos);
                 this.updatePointsNewRound(activity);
 
-            }else if(parent.getId() == R.id.spinner_playerA_equipA
-                    || parent.getId() == R.id.spinner_playerB_equipA
-                    || parent.getId() == R.id.spinner_playerA_equipB
-                    || parent.getId() == R.id.spinner_playerB_equipB){
+            }else if(parent.getId() == R.id.spinner_playerA_teamA
+                    || parent.getId() == R.id.spinner_playerB_teamA
+                    || parent.getId() == R.id.spinner_playerA_teamB
+                    || parent.getId() == R.id.spinner_playerB_teamB){
                 //onItemSelected event for the spinners used to set the player at the start of the Belote Game.
                 this.emptyPlayerCount = 0;
                 this.tryResetSelectedPlayer(parent.getId(), this.spinnerAA, pos);
@@ -422,13 +423,13 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                                 Utils.DEFAULT_VICTORY_POINTS);
                         selectedBelote.saveBelote();
                     }
-                    this.setupEquipLabel(activity);
+                    this.setupTeamLabel(activity);
                     this.updateDisplayedScores();
                     this.setupNewRoundLayout(activity);
                     slide(
-                            activity.findViewById(R.id.belote_equip_maker_layout),
-                            activity.findViewById(R.id.belote_equip_summary_layout),
-                            activity.findViewById(R.id.belote_equip_score_layout),
+                            activity.findViewById(R.id.belote_team_maker_layout),
+                            activity.findViewById(R.id.belote_team_summary_layout),
+                            activity.findViewById(R.id.belote_team_score_layout),
                             activity.findViewById(R.id.line),
                             this.layoutNewRound);
                 }
@@ -442,6 +443,10 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         Spinner spinnerFirst = activity.findViewById(R.id.spinner_new_first);
         Spinner spinnerLeader = activity.findViewById(R.id.spinner_new_leader);
         this.setupBelotePlayersSpinners(activity, spinnerFirst);
+        ArrayList<Round> rounds = selectedBelote.getRoundsList();
+        if(!rounds.isEmpty()){
+            spinnerFirst.setSelection(selectedBelote.getNextStartingPlayer(rounds.get(rounds.size() - 1).getStartingPlayerId()));
+        }
         this.setupBelotePlayersSpinners(activity, spinnerLeader);
     }
 
@@ -449,8 +454,8 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
      * Sets the current total points in beloteGame in the 2 TextViews.
      */
     private void updateDisplayedScores(){
-        this.textViewTotalPointsA.setText(String.valueOf(selectedBelote.getEquipAPoints()));
-        this.textViewTotalPointsB.setText(String.valueOf(selectedBelote.getEquipBPoints()));
+        this.textViewTotalPointsA.setText(String.valueOf(selectedBelote.getTeamAPoints()));
+        this.textViewTotalPointsB.setText(String.valueOf(selectedBelote.getTeamBPoints()));
     }
 
     private void tryResetSelectedPlayer(int selectedSpinnerID, Spinner comparedSpinner, int pos){
@@ -468,7 +473,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     }
 
     /**
-     * Checks if the current newRound has all the required parameters. If yes, all the user to enter the raw points.
+     * Checks if the current newRound has all the required parameters. If yes, allow the user to enter the raw points.
      * Else, locks the editText to enter these values, and clear the current raw points in newRound.
      * Finally, it updates the final points to match the raw points.
      * @param context is the current context.
@@ -496,18 +501,17 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             this.textViewFinalPointsA.setText(String.valueOf(newRound.getFinalPoints(true)));
             this.textViewFinalPointsB.setText(String.valueOf(newRound.getFinalPoints(false)));
             switch(newRound.getWinner()){
-                case -1:
-                    this.textViewFinalPointsA.setBackgroundColor(context.getResources().getColor(R.color.equip_A, null));
-                    this.textViewFinalPointsB.setBackgroundColor(0x00000000);
-                    break;
                 default:
-                case 0:
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
                     this.textViewFinalPointsB.setBackgroundColor(0x00000000);
                     break;
-                case 1:
+                case TEAM_A_WON:
+                    this.textViewFinalPointsA.setBackgroundColor(context.getResources().getColor(R.color.team_A, null));
+                    this.textViewFinalPointsB.setBackgroundColor(0x00000000);
+                    break;
+                case TEAM_B_WON:
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
-                    this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.equip_B, null));
+                    this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.team_B, null));
             }
             this.textViewPointTips.setText(this.getString(R.string.point_tips, this.newRound.getLeaderPlayerName(selectedBelote), String.valueOf(this.newRound.getMinimalPointsForLeader())));
         }else{
@@ -591,9 +595,10 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
                 Animation fadeIn = new AlphaAnimation(0, 1);
                 fadeIn.setDuration(600);
 
-                if(selectedBelote.getWinner() == 0){
-                    clearNewRoundLayout(activity);
-                    newRound = new Round();
+                if(!selectedBelote.getBeloteResult().isFinished()){
+                    int nextFirst = selectedBelote.getNextStartingPlayer(newRound.getStartingPlayerId());
+                    clearNewRoundLayout(activity, nextFirst);
+                    newRound = new Round(nextFirst);
                     updatePointsNewRound(activity);
 
                     summary.startAnimation(fadeIn);
@@ -639,12 +644,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
 
         TextView textWinnerTeam = new TextView(activity);
         textWinnerTeam.setLayoutParams(paramS);
-        if(selectedBelote.getWinner() == -1){
-            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
-            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.equipA_label)).getText());
+        if(selectedBelote.getBeloteResult() == Utils.Result.TEAM_A_WON){
+            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.team_A, null));
+            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.teamA_label)).getText());
         }else{
-            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
-            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.equipB_label)).getText());
+            textWinnerTeam.setTextColor(activity.getResources().getColor(R.color.team_B, null));
+            textWinnerTeam.setText(((TextView) activity.findViewById(R.id.teamB_label)).getText());
         }
         textWinnerTeam.setGravity(Gravity.CENTER);
         textWinnerTeam.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
@@ -701,12 +706,12 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             textLeader.setTextColor(context.getResources().getColor(R.color.black, null));
             textLeader.setGravity(Gravity.CENTER);
             textLeader.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
-            if((round.leaderIsEquipA() && (round.getWinner() != -1)) || (!round.leaderIsEquipA() && (round.getWinner() != 1))){
+            if((round.leaderIsTeamA() && (round.getWinner() != Utils.Result.TEAM_A_WON)) || (!round.leaderIsTeamA() && (round.getWinner() != Utils.Result.TEAM_B_WON))){
                 textLeader.setPaintFlags(textLeader.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
             }
-            textLeader.setBackgroundColor(context.getResources().getColor(round.leaderIsEquipA() ? R.color.equip_A : R.color.equip_B, null));
+            textLeader.setBackgroundColor(context.getResources().getColor(round.leaderIsTeamA() ? R.color.team_A : R.color.team_B, null));
 
-            if(round.leaderIsEquipA()){
+            if(round.leaderIsTeamA()){
                 layoutRoundTypeLeader.addView(textLeader);
                 layoutRoundTypeLeader.addView(imageRoundType);
             }else{
@@ -723,7 +728,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             LinearLayout.LayoutParams paramText = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
             this.textPointA.setLayoutParams(paramText);
             this.textPointA.setText(String.valueOf(round.getFinalPoints(true)));
-            this.textPointA.setTextColor(context.getResources().getColor(R.color.equip_A, null));
+            this.textPointA.setTextColor(context.getResources().getColor(R.color.team_A, null));
             this.textPointA.setGravity(Gravity.CENTER);
             this.textPointA.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
             layoutScore.addView(textPointA);
@@ -731,7 +736,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             this.textPointB = new TextView(context);
             this.textPointB.setLayoutParams(paramText);
             this.textPointB.setText(String.valueOf(round.getFinalPoints(false)));
-            this.textPointB.setTextColor(context.getResources().getColor(R.color.equip_B, null));
+            this.textPointB.setTextColor(context.getResources().getColor(R.color.team_B, null));
             this.textPointB.setGravity(Gravity.CENTER);
             this.textPointB.setTextSize(TypedValue.COMPLEX_UNIT_SP,40);
             layoutScore.addView(this.textPointB);

@@ -70,7 +70,7 @@ public class MainFragment extends Fragment {
 
     private void addOngoingBelotes(@NonNull Activity activity) {
         for(Belote belote : Belote.BELOTES_LIST){
-            if(!belote.isDone()){
+            if(!belote.isFinished()){
                 this.binding.ongoingGames.addView(this.createOngoingBeloteView(activity, belote));
             }
         }
@@ -108,27 +108,27 @@ public class MainFragment extends Fragment {
         layoutPlayers.setGravity(Gravity.CENTER);
         mainLayout.addView(layoutPlayers);
 
-        //Equip A name
+        //Team A name
         TextView textLeaderA = new TextView(activity);
         LinearLayout.LayoutParams paramLeaderA = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
         paramLeaderA.setMargins(tenDPinPX, 0, fiveDPinPX, 0);
         textLeaderA.setLayoutParams(paramLeaderA);
-        textLeaderA.setText(this.getString(R.string.equip_label, belote.getPlayerFromId(1).getName(), belote.getPlayerFromId(3).getName()));
+        textLeaderA.setText(this.getString(R.string.team_label, belote.getPlayerFromId(1).getName(), belote.getPlayerFromId(3).getName()));
         textLeaderA.setTextColor(activity.getResources().getColor(R.color.black, null));
-        textLeaderA.setBackgroundColor(activity.getResources().getColor(R.color.equip_A, null));
+        textLeaderA.setBackgroundColor(activity.getResources().getColor(R.color.team_A, null));
         textLeaderA.setGravity(Gravity.CENTER);
         textLeaderA.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
         textLeaderA.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
         layoutPlayers.addView(textLeaderA);
 
-        //Equip B name
+        //Team B name
         TextView textLeaderB = new TextView(activity);
         LinearLayout.LayoutParams paramLeaderB = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1f);
         paramLeaderB.setMargins(fiveDPinPX, 0, tenDPinPX, 0);
         textLeaderB.setLayoutParams(paramLeaderB);
-        textLeaderB.setText(this.getString(R.string.equip_label, belote.getPlayerFromId(2).getName(), belote.getPlayerFromId(4).getName()));
+        textLeaderB.setText(this.getString(R.string.team_label, belote.getPlayerFromId(2).getName(), belote.getPlayerFromId(4).getName()));
         textLeaderB.setTextColor(activity.getResources().getColor(R.color.black, null));
-        textLeaderB.setBackgroundColor(activity.getResources().getColor(R.color.equip_B, null));
+        textLeaderB.setBackgroundColor(activity.getResources().getColor(R.color.team_B, null));
         textLeaderB.setGravity(Gravity.CENTER);
         textLeaderB.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
         textLeaderB.setPadding(0, fiveDPinPX, 0, fiveDPinPX);
@@ -141,20 +141,20 @@ public class MainFragment extends Fragment {
         layoutScores.setGravity(Gravity.CENTER);
         mainLayout.addView(layoutScores);
 
-        //Equip A score
+        //Team A score
         TextView textScoreA = new TextView(activity);
         textScoreA.setLayoutParams(weightedParam);
-        textScoreA.setText(String.valueOf(belote.getEquipAPoints()));
-        textScoreA.setTextColor(activity.getResources().getColor(R.color.equip_A, null));
+        textScoreA.setText(String.valueOf(belote.getTeamAPoints()));
+        textScoreA.setTextColor(activity.getResources().getColor(R.color.team_A, null));
         textScoreA.setGravity(Gravity.CENTER);
         textScoreA.setTextSize(TypedValue.COMPLEX_UNIT_SP,30);
         layoutScores.addView(textScoreA);
 
-        //Equip B score
+        //Team B score
         TextView textScoreB = new TextView(activity);
         textScoreB.setLayoutParams(weightedParam);
-        textScoreB.setText(String.valueOf(belote.getEquipBPoints()));
-        textScoreB.setTextColor(activity.getResources().getColor(R.color.equip_B, null));
+        textScoreB.setText(String.valueOf(belote.getTeamBPoints()));
+        textScoreB.setTextColor(activity.getResources().getColor(R.color.team_B, null));
         textScoreB.setGravity(Gravity.CENTER);
         textScoreB.setTextSize(TypedValue.COMPLEX_UNIT_SP,30);
         layoutScores.addView(textScoreB);

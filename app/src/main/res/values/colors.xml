@@ -8,6 +8,6 @@
     <color name="light_grey">#FFDCDCDC</color>
     <color name="grey">#FF6F6F6F</color>
     <color name="dark_grey">#FF3F3F3F</color>
-    <color name="equip_A">#FF70D0DE</color>
-    <color name="equip_B">#FFFF9B6D</color>
+    <color name="team_A">#FF70D0DE</color>
+    <color name="team_B">#FFFF9B6D</color>
 </resources>

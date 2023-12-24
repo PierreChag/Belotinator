@@ -196,4 +196,43 @@ public class Utils {
         Log.e(TAG, "Impossible to save the file " + fileName + ".", null);
         return false;
     }
+
+    public enum Result{
+        IN_PROGRESS("in_progress"),
+        TEAM_A_WON("team_A_won"),
+        EQUALITY("equality"),
+        TEAM_B_WON("team_B_won");
+
+        private final String name;
+        Result(String name){
+            this.name = name;
+        }
+
+        /**
+         * @return True if one of the two teams won, false otherwise.
+         */
+        public boolean isFinished(){
+            return this == TEAM_A_WON || this == TEAM_B_WON;
+        }
+
+        /**
+         * @return A unique ID used to save this enum in the JSON file.
+         */
+        public String getName(){
+            return this.name;
+        }
+
+        /**
+         * @param name Loaded result's name.
+         * @return The corresponding value of Result instance.
+         */
+        public static Result fromId(String name){
+            for(Result result : Result.values()){
+                if(name.equals(result.getName())){
+                    return result;
+                }
+            }
+            return IN_PROGRESS;
+        }
+    }
 }

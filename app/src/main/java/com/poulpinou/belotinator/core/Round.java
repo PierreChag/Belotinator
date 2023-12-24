@@ -13,22 +13,33 @@ import java.util.ArrayList;
 public class Round {
 
     private RoundType type = null;
-    private int startingPlayerId = 0, leaderPlayerId = 0;
-    private int rawPointsA, rawPointsB, declarationPointsA, declarationPointsB, finalPointsA, finalPointsB;
+    private int startingPlayerId, leaderPlayerId = 0;
+    private int rawPointsA = -1, rawPointsB = -1, declarationPointsA, declarationPointsB, finalPointsA, finalPointsB;
     private final ArrayList<PlayerDeclaration> declarationList = new ArrayList<>();
     private boolean isInDispute = false;
 
     /**
      * Creates a new instance of Round but all the basic parameters must be initialized manually (RoundType, StartingPlayer and LeaderPlayer).
+     * With this constructor, there is no preselected starting player.
      */
-    public Round(){}
+    public Round(){
+        this(0);
+    }
+
+    /**
+     * Creates a new instance of Round but all the basic parameters must be initialized manually (RoundType, StartingPlayer and LeaderPlayer).
+     * @param defaultStartingPlayer Id of the default starting player.
+     */
+    public Round(int defaultStartingPlayer){
+        this.startingPlayerId = defaultStartingPlayer;
+    }
 
     /**
      * @return the id of the starting player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      */
     public int getStartingPlayerId(){
         return this.startingPlayerId;
@@ -36,10 +47,10 @@ public class Round {
 
     /**
      * @return the id of the leader player:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      */
     public int getLeaderPlayerId(){
         return this.leaderPlayerId;
@@ -70,10 +81,10 @@ public class Round {
     }
 
     /**
-     * @return true if the leader is  in equip A.
+     * @return true if the leader is  in team A.
      */
-    public boolean leaderIsEquipA() {
-        return Player.isEquipA(this.leaderPlayerId);
+    public boolean leaderIsTeamA() {
+        return Player.isTeamA(this.leaderPlayerId);
     }
 
     /**
@@ -92,27 +103,27 @@ public class Round {
     }
 
     /**
-     * @param equipA is True for Equip A, False for Equip B.
-     * @return the raw Points of the corresponding equip.
+     * @param teamA is True for Team A, False for Team B.
+     * @return the raw Points of the corresponding team.
      */
-    public int getRawPoints(boolean equipA){
-        return equipA ? this.rawPointsA : this.rawPointsB;
+    public int getRawPoints(boolean teamA){
+        return teamA ? this.rawPointsA : this.rawPointsB;
     }
 
     /**
-     * @param equipA is True for Equip A, False for Equip B.
-     * @return the raw Points of the corresponding equip.
+     * @param teamA is True for Team A, False for Team B.
+     * @return the raw Points of the corresponding team.
      */
-    public int getDeclarationPoints(boolean equipA) {
-        return equipA ? this.declarationPointsA : this.declarationPointsB;
+    public int getDeclarationPoints(boolean teamA) {
+        return teamA ? this.declarationPointsA : this.declarationPointsB;
     }
 
     /**
-     * @param equipA is True for Equip A, False for Equip B.
-     * @return the final Points of the corresponding equip.
+     * @param teamA is True for Team A, False for Team B.
+     * @return the final Points of the corresponding team.
      */
-    public int getFinalPoints(boolean equipA) {
-        return equipA ? this.finalPointsA : this.finalPointsB;
+    public int getFinalPoints(boolean teamA) {
+        return teamA ? this.finalPointsA : this.finalPointsB;
     }
 
     /**
@@ -126,8 +137,8 @@ public class Round {
      * Checks if the round is in dispute. If yes, set the leader final points to 0.
      */
     public void choseDisputeState() {
-        if(this.getWinner() == 0){
-            if(this.leaderIsEquipA()){
+        if(this.getWinner() == Utils.Result.EQUALITY){
+            if(this.leaderIsTeamA()){
                 this.finalPointsA = 0;
             }else{
                 this.finalPointsB = 0;
@@ -138,14 +149,14 @@ public class Round {
 
     /**
      * Resolves the dispute state of the round by adding the missing points to the winner of the next round.
-     * @param nextWinnerIsEquipA is true if the equip that won the next round is equip A.
+     * @param nextWinnerIsTeamA is true if the team that won the next round is team A.
      * @return number of points added to the winner score.
      */
-    public int resolveDispute(boolean nextWinnerIsEquipA){
+    public int resolveDispute(boolean nextWinnerIsTeamA){
         int pointsToAdd = 0;
         if(this.isInDispute){
             pointsToAdd = Math.max(this.finalPointsA, this.finalPointsB);
-            if(nextWinnerIsEquipA){
+            if(nextWinnerIsTeamA){
                 this.finalPointsA += pointsToAdd;
             }else{
                 this.finalPointsB += pointsToAdd;
@@ -185,7 +196,7 @@ public class Round {
     public int addDeclaration(int playerId, DeclarationType declarationType){
         int id = View.generateViewId();
         this.declarationList.add(new PlayerDeclaration(playerId, declarationType, id));
-        if(Player.isEquipA(playerId)) {
+        if(Player.isTeamA(playerId)) {
             this.declarationPointsA += declarationType.getValue(this.type);
         }else{
             this.declarationPointsB += declarationType.getValue(this.type);
@@ -199,7 +210,7 @@ public class Round {
      */
     public void removeDeclaration(int index){
         PlayerDeclaration declaration = this.declarationList.get(index);
-        if(declaration.isEquipA()) {
+        if(declaration.isTeamA()) {
             this.declarationPointsA -= declaration.getDeclarationType().getValue(this.type);
         }else{
             this.declarationPointsB -= declaration.getDeclarationType().getValue(this.type);
@@ -217,13 +228,13 @@ public class Round {
 
     /**
      * Computes the points (rawPoints without declaration, declarationPoints and finalPoints with multiplier).
-     * @param equipA True if points in parameters are equipA's points.
+     * @param teamA True if points in parameters are teamA's points.
      * @param points Points won during this round.
      */
-    public void setPointsEquip(boolean equipA, int points){
+    public void setPointsTeam(boolean teamA, int points){
         if(this.type == null) return;
-        this.rawPointsA = equipA ? points : this.type.getPointsPerRound() - points;
-        this.rawPointsB = equipA ? this.type.getPointsPerRound() - points : points;
+        this.rawPointsA = teamA ? points : this.type.getPointsPerRound() - points;
+        this.rawPointsB = teamA ? this.type.getPointsPerRound() - points : points;
         this.computesFinalPoints();
     }
 
@@ -234,14 +245,14 @@ public class Round {
      * - then applies the multiplies of the roundType.
      */
     public void computesFinalPoints(){
-        if(this.rawPointsA == 0 && this.rawPointsB == 0){
+        if(this.rawPointsA == -1 && this.rawPointsB == -1){
             this.finalPointsA = 0;
             this.finalPointsB = 0;
             return;
         }
         this.finalPointsA = this.rawPointsA + this.declarationPointsA;
         this.finalPointsB = this.rawPointsB + this.declarationPointsB;
-        if(this.leaderIsEquipA()) {
+        if(this.leaderIsTeamA()) {
             if(this.finalPointsB > this.finalPointsA) {
                 this.finalPointsA = 0;
                 this.finalPointsB = this.type.getPointsPerRound() + this.declarationPointsA + this.declarationPointsB;
@@ -262,26 +273,23 @@ public class Round {
     }
 
     /**
-     * @return an integer corresponding to the winner.
-     * <p>- Equip A: -1
-     * <p>- Equality: 0
-     * <p>- Equip B: 1
+     * @return the Result of this Round.
      */
-    public int getWinner(){
-        if(this.isInDispute) return 0;
-        return this.finalPointsA > this.finalPointsB ? -1 : 1;
+    public Utils.Result getWinner(){
+        if(this.isInDispute) return Utils.Result.EQUALITY;
+        return this.finalPointsA > this.finalPointsB ? Utils.Result.TEAM_A_WON : Utils.Result.TEAM_B_WON;
     }
 
     /**
      * @param playerId:
-     * <p>- 1: playerA EquipA
-     * <p>- 2: playerA EquipB
-     * <p>- 3: playerB EquipA
-     * <p>- 4: playerB EquipB
+     * <p>- 1: playerA TeamA
+     * <p>- 2: playerA TeamB
+     * <p>- 3: playerB TeamA
+     * <p>- 4: playerB TeamB
      * @return true if the player is in the team that won.
      */
     public boolean wonByPlayer(int playerId){
-        return Player.isEquipA(playerId) ? this.getWinner() == -1 : this.getWinner() == 1;
+        return Player.isTeamA(playerId) ? this.getWinner() == Utils.Result.TEAM_A_WON : this.getWinner() == Utils.Result.TEAM_B_WON;
     }
 
     /**
@@ -290,11 +298,10 @@ public class Round {
     public boolean wonWithDeclarations(){
         switch (this.getWinner()){
             default:
-            case 0:
                 return false;
-            case -1:
+            case TEAM_A_WON:
                 return this.finalPointsA - this.type.getMultiplier() * (this.declarationPointsA - this.declarationPointsB) <= this.finalPointsB;
-            case 1:
+            case TEAM_B_WON:
                 return this.finalPointsB - this.type.getMultiplier() * (this.declarationPointsB - this.declarationPointsA) <= this.finalPointsB;
         }
 
@@ -371,8 +378,8 @@ public class Round {
      * Set raw Points and final Points to 0.
      */
     public void clearPoints() {
-        this.rawPointsA = 0;
-        this.rawPointsB = 0;
+        this.rawPointsA = -1;
+        this.rawPointsB = -1;
         this.finalPointsA = 0;
         this.finalPointsB = 0;
         this.isInDispute = false;
@@ -382,7 +389,7 @@ public class Round {
      * @return the minimal number of points the leader needed to obtain in order to win the Round.
      */
     public int getMinimalPointsForLeader() {
-        return (this.type.getPointsPerRound() + this.declarationPointsA + this.declarationPointsB) / 2 - this.getDeclarationPoints(this.leaderIsEquipA()) + 1;
+        return (this.type.getPointsPerRound() + this.declarationPointsA + this.declarationPointsB) / 2 - this.getDeclarationPoints(this.leaderIsTeamA()) + 1;
     }
 
     public static class PlayerDeclaration{
@@ -436,10 +443,10 @@ public class Round {
         }
 
         /**
-         * @return True if this declaration was made by the equip A.
+         * @return True if this declaration was made by the team A.
          */
-        public boolean isEquipA(){
-            return Player.isEquipA(this.getPlayerId());
+        public boolean isTeamA(){
+            return Player.isTeamA(this.getPlayerId());
         }
     }
 }

@@ -7,7 +7,7 @@
     android:orientation="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/belote_equip_maker_layout"
+        android:id="@+id/belote_team_maker_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -23,45 +23,45 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <Spinner
-            android:id="@+id/spinner_playerA_equipA"
+            android:id="@+id/spinner_playerA_teamA"
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="40dp"
-            android:background="@color/equip_A"
+            android:background="@color/team_A"
             android:textAlignment="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Spinner
-            android:id="@+id/spinner_playerA_equipB"
+            android:id="@+id/spinner_playerA_teamB"
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
             android:layout_marginEnd="16dp"
-            android:background="@color/equip_B"
+            android:background="@color/team_B"
             android:textAlignment="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Spinner
-            android:id="@+id/spinner_playerB_equipA"
+            android:id="@+id/spinner_playerB_teamA"
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="176dp"
             android:layout_marginEnd="16dp"
-            android:background="@color/equip_A"
+            android:background="@color/team_A"
             android:textAlignment="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Spinner
-            android:id="@+id/spinner_playerB_equipB"
+            android:id="@+id/spinner_playerB_teamB"
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="176dp"
-            android:background="@color/equip_B"
+            android:background="@color/team_B"
             android:textAlignment="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -69,7 +69,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
-        android:id="@+id/belote_equip_summary_layout"
+        android:id="@+id/belote_team_summary_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/dark_grey"
@@ -79,27 +79,27 @@
         android:visibility="gone">
 
         <TextView
-            android:id="@+id/equipA_label"
+            android:id="@+id/teamA_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="@color/equip_A"
+            android:background="@color/team_A"
             android:paddingVertical="6dp"
-            android:text="@string/equip_a"
+            android:text="@string/team_a"
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="20sp" />
 
         <TextView
-            android:id="@+id/equipB_label"
+            android:id="@+id/teamB_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:layout_weight="1"
-            android:background="@color/equip_B"
+            android:background="@color/team_B"
             android:paddingVertical="6dp"
-            android:text="@string/equip_b"
+            android:text="@string/team_b"
             android:textAlignment="center"
             android:textColor="@color/black"
             android:textSize="20sp" />
@@ -107,7 +107,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/belote_equip_score_layout"
+        android:id="@+id/belote_team_score_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/dark_grey"
@@ -115,21 +115,21 @@
         android:visibility="gone">
 
         <TextView
-            android:id="@+id/equipA_points"
+            android:id="@+id/teamA_points"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAlignment="center"
-            android:textColor="@color/equip_A"
+            android:textColor="@color/team_A"
             android:textSize="40sp" />
 
         <TextView
-            android:id="@+id/equipB_points"
+            android:id="@+id/teamB_points"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textAlignment="center"
-            android:textColor="@color/equip_B"
+            android:textColor="@color/team_B"
             android:textSize="40sp" />
 
     </LinearLayout>
@@ -180,18 +180,18 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:layout_weight="4"
+                        android:layout_weight="1"
                         android:gravity="center_vertical"
                         android:paddingHorizontal="10dp"
                         android:text="@string/leader"
                         android:textColor="@color/black"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                     <Spinner
                         android:id="@+id/spinner_new_leader"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_weight="3" />
+                        android:layout_weight="1" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -276,18 +276,18 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:layout_weight="4"
+                        android:layout_weight="1"
                         android:gravity="center_vertical"
                         android:paddingHorizontal="10dp"
                         android:text="@string/first_player"
                         android:textColor="@color/black"
-                        android:textSize="24sp" />
+                        android:textSize="20sp" />
 
                     <Spinner
                         android:id="@+id/spinner_new_first"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_weight="3" />
+                        android:layout_weight="1" />
                 </LinearLayout>
 
                 <Button
@@ -340,7 +340,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="5dp"
                         android:layout_weight="1"
-                        android:autofillHints="Must input the amount of points from Equip A."
+                        android:autofillHints="Must input the amount of points from Team A."
                         android:background="@color/white"
                         android:inputType="numberSigned"
                         android:textAlignment="center"
@@ -353,7 +353,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="5dp"
                         android:layout_weight="1"
-                        android:autofillHints="Must input the amount of points from Equip B."
+                        android:autofillHints="Must input the amount of points from Team B."
                         android:background="@color/white"
                         android:inputType="numberSigned"
                         android:textAlignment="center"
