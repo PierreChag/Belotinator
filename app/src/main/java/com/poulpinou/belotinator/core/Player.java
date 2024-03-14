@@ -212,7 +212,7 @@ public class Player {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Utils.saveJSONStringToFile(Utils.getMainDirectoryFile(), Utils.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
+        Storage.saveJSONStringToFile(Storage.getMainDirectoryFile(), Storage.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
     }
 
     /**
@@ -221,7 +221,7 @@ public class Player {
      */
     public static ArrayList<Player> loadPlayersList(){
         ArrayList<Player> list = new ArrayList<>();
-        String fileToString = Utils.getJSONStringFromFile(Utils.getMainDirectoryFile(), Utils.PLAYERS_LIST_FILE_NAME);
+        String fileToString = Storage.getJSONStringFromFile(Storage.getMainDirectoryFile(), Storage.PLAYERS_LIST_FILE_NAME);
         if(fileToString != null){
             try {
                 // Getting data JSON Array nodes

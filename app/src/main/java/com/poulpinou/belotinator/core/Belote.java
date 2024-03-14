@@ -164,17 +164,12 @@ public class Belote {
      * @return the instance of the corresponding player.
      */
     public Player getPlayerFromId(int id){
-        switch (id){
-            default:
-            case 1:
-                return this.playerATeamA;
-            case 2:
-                return this.playerATeamB;
-            case 3:
-                return this.playerBTeamA;
-            case 4:
-                return this.playerBTeamB;
-        }
+        return switch (id) {
+            default -> this.playerATeamA;
+            case 2 -> this.playerATeamB;
+            case 3 -> this.playerBTeamA;
+            case 4 -> this.playerBTeamB;
+        };
     }
 
     /**
@@ -234,7 +229,7 @@ public class Belote {
      * Reads the JSON files stored in the folder. Create an instance of Belote for each entry found.
      */
     public static void loadBelotesList(){
-        ArrayList<String> filesToString = Utils.getAllJSONStringFromDirectory(Utils.getBelotesDirectory());
+        ArrayList<String> filesToString = Storage.getAllJSONStringFromDirectory(Storage.getBelotesDirectory());
         for(String fileToString : filesToString){
             loadBelote(fileToString);//TODO load data from previously DONE belotes.
         }
@@ -270,7 +265,7 @@ public class Belote {
                 beloteJSON.remove("done");
                 beloteJSON.put("result", loadedBelote.beloteResult.getName());
                 // Saves the modification
-                Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), loadedBelote.getFileName(), beloteJSON.toString());
+                Storage.saveJSONStringToFile(Storage.getBelotesDirectory(), loadedBelote.getFileName(), beloteJSON.toString());
             }
             loadedBelote.beloteResult = Result.fromId(beloteJSON.getString("result"));
 
@@ -326,11 +321,11 @@ public class Belote {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Utils.saveJSONStringToFile(Utils.getBelotesDirectory(), this.getFileName(), thisBeloteJson.toString());
+        Storage.saveJSONStringToFile(Storage.getBelotesDirectory(), this.getFileName(), thisBeloteJson.toString());
     }
 
     public void deleteBelote() {
-        Utils.deleteFile(Utils.getBelotesDirectory(), this.getFileName());
+        Storage.deleteFile(Storage.getBelotesDirectory(), this.getFileName());
         BELOTES_LIST.remove(this);
     }
 

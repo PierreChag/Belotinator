@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<requestAppPolicy>
+    <clientPackageName>
+        <string>com.poulpinou.belotinator</string>
+    </clientPackageName>
+    <limitAdTracking>
+        0
+    </limitAdTracking>
+</requestAppPolicy>

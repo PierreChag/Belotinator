@@ -14,7 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.poulpinou.belotinator.R;
@@ -26,11 +28,6 @@ public class MainFragment extends Fragment {
 
     private FragmentMainBinding binding;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        this.setHasOptionsMenu(true);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -42,6 +39,27 @@ public class MainFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        FragmentActivity activity = this.getActivity();
+        if(activity != null){
+            activity.invalidateMenu();
+            activity.addMenuProvider(new MenuProvider() {
+                @Override
+                public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                    menu.clear();
+                    menuInflater.inflate(R.menu.menu_main, menu);
+                }
+
+                @Override
+                public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                    int id = menuItem.getItemId();
+                    if(id == R.id.action_settings) {
+                        //TODO Add the action_settings effect !
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
         this.binding.buttonPlayers.setOnClickListener(view1 -> NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_PlayersFragment));
         this.binding.buttonHistoric.setOnClickListener(view1 -> NavHostFragment.findNavController(MainFragment.this).navigate(R.id.action_MainFragment_to_HistoricFragment));
     }
@@ -50,22 +68,6 @@ public class MainFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         this.binding = null;
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_main, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            //TODO Add the action_settings effect !
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void addOngoingBelotes(@NonNull Activity activity) {

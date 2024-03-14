@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -65,12 +66,7 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     private Spinner spinnerAA, spinnerBA, spinnerAB, spinnerBB;
 
     //Required empty public constructor
-    public BeloteFragment() {}
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        this.setHasOptionsMenu(true);
+    public BeloteFragment() {
     }
 
     @Override
@@ -81,8 +77,43 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Activity activity = this.getActivity();
+        FragmentActivity activity = this.getActivity();
         if (activity != null){
+            activity.addMenuProvider(new MenuProvider() {
+                @Override
+                public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                    menu.clear();
+                    menuInflater.inflate(R.menu.menu_delete, menu);
+                }
+
+                @Override
+                public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                    int id = menuItem.getItemId();
+                    if (id == R.id.action_delete) {
+                        Activity activity = getActivity();
+                        if(activity != null){
+                            if(selectedBelote == null){
+                                activity.onBackPressed();
+                            }else{
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                                builder.setTitle(R.string.warning);
+                                builder.setMessage(R.string.confirm_belote_delete);
+                                builder.setPositiveButton(R.string.yes, (dialog, id1) -> {
+                                    dialog.dismiss();
+                                    selectedBelote.deleteBelote();
+                                    activity.onBackPressed();
+                                });
+                                builder.setNegativeButton("No", (dialog, id12) -> dialog.dismiss());
+                                AlertDialog alert = builder.create();
+                                alert.show();
+                            }
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
             //Put components into variables
             this.spinnerAA = activity.findViewById(R.id.spinner_playerA_teamA);
             this.spinnerBA = activity.findViewById(R.id.spinner_playerB_teamA);
@@ -135,41 +166,8 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
         }
     }
 
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_delete, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_delete) {
-            Activity activity = this.getActivity();
-            if(activity != null){
-                if(selectedBelote == null){
-                    activity.onBackPressed();
-                }else{
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this.getActivity());
-                    builder.setTitle(R.string.warning);
-                    builder.setMessage(R.string.confirm_belote_delete);
-                    builder.setPositiveButton(R.string.yes, (dialog, id1) -> {
-                        dialog.dismiss();
-                        selectedBelote.deleteBelote();
-                        activity.onBackPressed();
-                    });
-                    builder.setNegativeButton("No", (dialog, id12) -> dialog.dismiss());
-                    AlertDialog alert = builder.create();
-                    alert.show();
-                }
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void setupAllPlayersSpinners(@NonNull Activity activity, Spinner spinner){
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this.getActivity(), R.layout.centerer_layout, Player.getStringPlayerList(activity));
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activity, R.layout.centerer_layout, Player.getStringPlayerList(activity));
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
@@ -370,21 +368,14 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
     }
 
     private int getButtonRoundTypeId(RoundType roundType){
-        switch (roundType){
-            default:
-            case CLUB:
-                return R.id.button_club;
-            case DIAMOND:
-                return R.id.button_diamond;
-            case HEART:
-                return R.id.button_heart;
-            case SPADE:
-                return R.id.button_spade;
-            case WITHOUT_TRUMP:
-                return R.id.button_without_trump;
-            case ALL_TRUMP:
-                return R.id.button_all_trump;
-        }
+        return switch (roundType) {
+            default -> R.id.button_club;
+            case DIAMOND -> R.id.button_diamond;
+            case HEART -> R.id.button_heart;
+            case SPADE -> R.id.button_spade;
+            case WITHOUT_TRUMP -> R.id.button_without_trump;
+            case ALL_TRUMP -> R.id.button_all_trump;
+        };
     }
 
 
@@ -500,18 +491,19 @@ public class BeloteFragment extends Fragment implements AdapterView.OnItemSelect
             this.newRound.computesFinalPoints();
             this.textViewFinalPointsA.setText(String.valueOf(newRound.getFinalPoints(true)));
             this.textViewFinalPointsB.setText(String.valueOf(newRound.getFinalPoints(false)));
-            switch(newRound.getWinner()){
-                default:
+            switch (newRound.getWinner()) {
+                default -> {
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
                     this.textViewFinalPointsB.setBackgroundColor(0x00000000);
-                    break;
-                case TEAM_A_WON:
+                }
+                case TEAM_A_WON -> {
                     this.textViewFinalPointsA.setBackgroundColor(context.getResources().getColor(R.color.team_A, null));
                     this.textViewFinalPointsB.setBackgroundColor(0x00000000);
-                    break;
-                case TEAM_B_WON:
+                }
+                case TEAM_B_WON -> {
                     this.textViewFinalPointsA.setBackgroundColor(0x00000000);
                     this.textViewFinalPointsB.setBackgroundColor(context.getResources().getColor(R.color.team_B, null));
+                }
             }
             this.textViewPointTips.setText(this.getString(R.string.point_tips, this.newRound.getLeaderPlayerName(selectedBelote), String.valueOf(this.newRound.getMinimalPointsForLeader())));
         }else{
