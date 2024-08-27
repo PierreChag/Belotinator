@@ -1,41 +1,31 @@
 package com.poulpinou.belotinator;
 
-import static com.poulpinou.belotinator.core.Storage.CONNECTION_CALLBACKS;
-import static com.poulpinou.belotinator.core.Storage.ON_CONNECTION_FAILED_LISTENER;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import android.content.Intent;
-
-import androidx.annotation.Nullable;
-
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.drive.Drive;
 
 import com.poulpinou.belotinator.databinding.ActivityMainBinding;
+
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements ActionBarTitleSetter{
 
     private AppBarConfiguration appBarConfiguration;
+    public static String mainDirectory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize GoogleApiClient
-        GoogleApiClient googleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Drive.API)
-                .addScope(Drive.SCOPE_FILE)
-                .addConnectionCallbacks(CONNECTION_CALLBACKS)
-                .addOnConnectionFailedListener(ON_CONNECTION_FAILED_LISTENER)
-                .build();
-
-        googleApiClient.connect();
+        mainDirectory = this.getMainDirectoryFile();
 
         ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -65,6 +55,20 @@ public class MainActivity extends AppCompatActivity implements ActionBarTitleSet
     public void setActionBarTitle(String title) {
         if(this.getSupportActionBar() != null){
             this.getSupportActionBar().setTitle(title);
+        }
+    }
+
+    /**
+     * @return the String address of the directory where files are saved.
+     */
+    @Nullable
+    private String getMainDirectoryFile(){
+        File directory = this.getFilesDir();
+        if (directory != null) {
+            return directory.getAbsolutePath();
+        } else {
+            Log.e("FileUtils", "Failed to get the internal files directory.");
+            return null;
         }
     }
 }

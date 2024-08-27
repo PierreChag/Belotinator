@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.poulpinou.belotinator.MainActivity;
 import com.poulpinou.belotinator.R;
 
 import org.json.JSONArray;
@@ -212,7 +213,7 @@ public class Player {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Storage.saveJSONStringToFile(Storage.getMainDirectoryFile(), Storage.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
+        Storage.saveJSONStringToFile(MainActivity.mainDirectory, Storage.PLAYERS_LIST_FILE_NAME, playersArrayJson.toString());
     }
 
     /**
@@ -221,7 +222,7 @@ public class Player {
      */
     public static ArrayList<Player> loadPlayersList(){
         ArrayList<Player> list = new ArrayList<>();
-        String fileToString = Storage.getJSONStringFromFile(Storage.getMainDirectoryFile(), Storage.PLAYERS_LIST_FILE_NAME);
+        String fileToString = Storage.getJSONStringFromFile(MainActivity.mainDirectory, Storage.PLAYERS_LIST_FILE_NAME);
         if(fileToString != null){
             try {
                 // Getting data JSON Array nodes

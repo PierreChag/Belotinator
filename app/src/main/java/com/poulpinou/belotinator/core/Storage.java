@@ -1,70 +1,23 @@
 package com.poulpinou.belotinator.core;
 
-import static android.content.ContentValues.TAG;
-
-import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import com.google.auth.oauth2.GoogleCredentials;
 
+import com.poulpinou.belotinator.MainActivity;
+
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.io.IOException;
 
 public class Storage {
 
     public static final String PLAYERS_LIST_FILE_NAME = "players_list.json";
-
-    /**
-     * Creates a file in the application data folder.
-     *
-     * @return Created file's Id.
-     */
-    public static String uploadAppData() throws IOException {
-    /*Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity for
-    guides on implementing OAuth2 for your application.*/
-        GoogleCredentials credentials = null;
-        try {
-            credentials = GoogleCredentials.getApplicationDefault()
-                    .createScoped(Arrays.asList(DriveScopes.DRIVE_APPDATA));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        HttpRequestInitializer requestInitializer = new HttpCredentialsAdapter(
-                credentials);
-
-        // Build a new authorized API client service.
-        Drive service = new Drive.Builder(new NetHttpTransport(),
-                GsonFactory.getDefaultInstance(),
-                requestInitializer)
-                .setApplicationName("Drive samples")
-                .build();
-        try {
-            // File's metadata.
-            File fileMetadata = new File();
-            fileMetadata.setName("config.json");
-            fileMetadata.setParents(Collections.singletonList("appDataFolder"));
-            java.io.File filePath = new java.io.File("files/config.json");
-            FileContent mediaContent = new FileContent("application/json", filePath);
-            File file = service.files().create(fileMetadata, mediaContent)
-                    .setFields("id")
-                    .execute();
-            System.out.println("File ID: " + file.getId());
-            return file.getId();
-        } catch (GoogleJsonResponseException e) {
-            // TODO(developer) - handle error appropriately
-            System.err.println("Unable to create file: " + e.getDetails());
-            throw e;
-        }
-    }
+    public static final String BELOTES_FOLDER_NAME = "belotes";
+    private static String belotesDirectory;
 
     /**
      * @param directory is the address where the files are located. Use getMainDirectoryFile() to get the address of the main folder.
@@ -91,22 +44,17 @@ public class Storage {
      */
     @Nullable
     public static String getJSONStringFromFile(@Nullable String directory, String fileName){
-        if(directory != null){
-            try {
-                File file = new File(directory, fileName);
-                FileInputStream stream = new FileInputStream(file);
-                String fileToString = null;
-                try {
-                    FileChannel fc = stream.getChannel();
-                    MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-                    stream.close();
-                    fileToString = Charset.defaultCharset().decode(bb).toString();
-                } catch(Exception e){
-                    e.printStackTrace();
+        if (directory != null) {
+            File file = new File(directory, fileName);
+            StringBuilder stringBuilder = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    stringBuilder.append(line);
                 }
-                return fileToString;
-            } catch (Exception e) {
-                e.printStackTrace();
+                return stringBuilder.toString();
+            } catch (IOException e) {
+                Log.e("FileUtils", "Error reading file: " + fileName, e);
             }
         }
         return null;
@@ -118,13 +66,18 @@ public class Storage {
      * @param fileName the name of the file to be deleted.
      */
     public static void deleteFile(@Nullable String directory, String fileName){
-        if(directory != null){
-            try {
-                File file = new File(directory, fileName);
-                file.delete();
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (fileName != null && !fileName.isEmpty() && directory != null) {
+            File file = new File(directory, fileName);
+            if (file.exists()) {
+                boolean deleted = file.delete();
+                if (!deleted) {
+                    Log.e("FileUtils", "Failed to delete file: " + fileName);
+                }
+            } else {
+                Log.w("FileUtils", "File not found: " + fileName);
             }
+        } else {
+            Log.e("FileUtils", "File name is null or empty. Cannot delete file.");
         }
     }
 
@@ -132,56 +85,16 @@ public class Storage {
      * @param directory is the address where the file must be saved. Use getMainDirectoryFile() to get the address of the main folder.
      * @param fileName is the full name of the file to be saved (including the type ".json").
      * @param jsonInString is the JSON content to be saved, converted in String format.
-     * @return True if the file could be saved, false otherwise.
      */
-    public static boolean saveJSONStringToFile(String directory, String fileName, String jsonInString){
-        String state = Environment.getExternalStorageState();
-        if (!Environment.MEDIA_MOUNTED.equals(state)) {
-            //If it isn't mounted - we can't write into it.
-            Log.e(TAG, "Impossible to save the file " + fileName + ". External storage isn't mounted.", null);
-            return false;
-        }
-        if(directory == null){
-            Log.e(TAG, "Impossible to save the file " + fileName + ". The root to belotinator's folder couldn't be accessed.", null);
-            return false;
-        }
-        File file = new File(directory, fileName);
-        try {
-            file.createNewFile();
-            FileOutputStream outputStream;
-            outputStream = new FileOutputStream(file, false);
-            outputStream.write(jsonInString.getBytes());
-            outputStream.close();
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Log.e(TAG, "Impossible to save the file " + fileName + ".", null);
-        return false;
-    }
-
-    /**
-     * @return the String address of the directory where files are saved.
-     */
-    @Nullable
-    public static String getMainDirectoryFile(){
-        if(mainStorageDirectory == null){
-            File dir;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                mainStorageDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + MAIN_FOLDER_NAME;
-            } else {
-                mainStorageDirectory = Environment.getExternalStorageDirectory() + "/" + MAIN_FOLDER_NAME;
-            }
-            dir = new File(mainStorageDirectory);
-            // We need to check if this directory exists
-            if(!dir.exists()) {
-                // Make it, if it doesn't exit
-                if(!dir.mkdirs()){
-                    mainStorageDirectory = null;
-                }
+    public static void saveJSONStringToFile(String directory, String fileName, String jsonInString){
+        if (directory != null) {
+            File file = new File(directory, fileName);
+            try (FileWriter fileWriter = new FileWriter(file)) {
+                fileWriter.write(jsonInString);
+            } catch (IOException e) {
+                Log.e("FileUtils", "Error saving file: " + fileName, e);
             }
         }
-        return mainStorageDirectory;
     }
 
     /**
@@ -191,7 +104,7 @@ public class Storage {
     public static String getBelotesDirectory(){
         if(belotesDirectory == null){
             File dir;
-            belotesDirectory = getMainDirectoryFile() + "/" + BELOTES_FOLDER_NAME;
+            belotesDirectory = MainActivity.mainDirectory + "/" + BELOTES_FOLDER_NAME;
             dir = new File(belotesDirectory);
             // We need to check if this directory exists
             if(!dir.exists()) {
